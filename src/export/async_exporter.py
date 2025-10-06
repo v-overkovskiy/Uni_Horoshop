@@ -120,6 +120,20 @@ class AsyncExporter:
                     ru_hero_image = self._extract_hero_image_from_html(ru_html) or result.get('ru_hero_image', '')
                     ua_hero_image = self._extract_hero_image_from_html(ua_html) or result.get('ua_hero_image', '')
                     
+                    # Проверяем наличие изображений
+                    has_image_ru = bool(ru_hero_image and ru_hero_image.strip())
+                    has_image_ua = bool(ua_hero_image and ua_hero_image.strip())
+                    
+                    # Пометка об отсутствии изображения
+                    image_status = "OK"
+                    if not has_image_ru and not has_image_ua:
+                        image_status = "⚠️ БЕЗ ФОТО"
+                        logger.warning(f"⚠️ Товар без изображения: {result.get('url', '')}")
+                    elif not has_image_ru:
+                        image_status = "⚠️ БЕЗ ФОТО RU"
+                    elif not has_image_ua:
+                        image_status = "⚠️ БЕЗ ФОТО UA"
+                    
                     # Время обработки
                     processing_time = result.get('processing_time', 0.0)
                     
@@ -136,6 +150,7 @@ class AsyncExporter:
                     row = {
                         'Input_Index': result.get('input_index', 0),
                         'Status': result.get('status', 'unknown'),
+                        'Image_Status': image_status,
                         'URL': result.get('url', ''),
                         'RU_Title': ru_title,
                         'UA_Title': ua_title,

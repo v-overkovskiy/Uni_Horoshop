@@ -198,10 +198,15 @@ class ProductFragmentRenderer:
 
             if not image_data or not image_data.get('url'):
                 fallback_url = self._generate_image_url_from_product_url(product_url)
-                image_data = {
-                    'url': fallback_url,
-                    'alt': self._generate_alt_text(title, locale)
-                }
+                if fallback_url:  # Если fallback вернул не None
+                    image_data = {
+                        'url': fallback_url,
+                        'alt': self._generate_alt_text(title, locale)
+                    }
+                else:
+                    # Изображение не найдено, возвращаем пустой результат
+                    logger.warning(f"⚠️ Изображение не найдено для товара: {product_url}")
+                    return {}
 
             return image_data
         except Exception as e:

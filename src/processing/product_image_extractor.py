@@ -397,9 +397,9 @@ class ProductImageExtractor:
                 logger.info(f"✅ Используем fallback изображение для {slug_part}: {fallback_url}")
                 return fallback_url
 
-        default_url = "https://prorazko.com/content/images/epilax_default.webp"
-        logger.info(f"⚠️ Используем общий fallback изображения: {default_url}")
-        return default_url
+        # Вместо дефолтного изображения возвращаем None
+        logger.warning(f"⚠️ Изображение не найдено для товара: {product_url}")
+        return None
     
     def generate_product_image_url(self, product_url: str, product_title: str) -> str:
         """Генерирует URL изображения на основе характеристик товара"""
