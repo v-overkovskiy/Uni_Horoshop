@@ -826,13 +826,13 @@ class AsyncProductProcessor:
         try:
             logger.info(f"🛡️ Resilient processing: {product_url}")
             
-            # Инициализируем Claude 3.5 Sonnet для recovery (максимальная надёжность)
+            # Инициализируем Claude для recovery (максимальная надёжность)
             from anthropic import Anthropic
             import os
             claude_client = Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
             self.llm_recovery.llm = claude_client
-            self.llm_recovery.model = "claude-3-5-sonnet-20241022"  # Последняя версия Claude 3.5 Sonnet
-            logger.info(f"🟣 Resilient recovery использует Claude 3.5 Sonnet для максимальной надёжности")
+            self.llm_recovery.model = "claude-3-haiku-20240307"  # Claude Haiku - быстрый и надёжный
+            logger.info(f"🟣 Resilient recovery использует Claude Haiku для максимальной надёжности")
             
             # 1. Получаем URLs для обеих локалей
             ua_url, ru_url = self.resilient_fetcher.get_fallback_urls(product_url)

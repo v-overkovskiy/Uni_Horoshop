@@ -411,7 +411,9 @@ class RealFactsExtractor:
         elif 'флюид' in text_content or 'fluid' in text_content:
             return "https://prorazko.com/content/images/fluid.webp"
         else:
-            return "https://prorazko.com/content/images/epilax-product.webp"
+            # Изображение не найдено - возвращаем None вместо заглушки
+            logger.warning(f"⚠️ Изображение не найдено в HTML контенте")
+            return None
     
     def _validate_extracted_facts(self, facts: Dict[str, Any]) -> bool:
         """

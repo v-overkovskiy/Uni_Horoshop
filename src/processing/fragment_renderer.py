@@ -270,8 +270,9 @@ class ProductFragmentRenderer:
         elif 'hel-do-depiliatsii' in url_slug:
             return "https://prorazko.com/content/images/gel-pre-depilation-250ml.webp"
         
-        # Последний fallback
-        return "https://prorazko.com/content/images/epilax-product.webp"
+        # Изображение не найдено - возвращаем None вместо заглушки
+        logger.warning(f"⚠️ Изображение не найдено для URL: {product_url}")
+        return None
     
     def _generate_alt_text(self, title: str, locale: str) -> str:
         """Генерирует ALT-текст для изображения товара по формуле ProRazko"""

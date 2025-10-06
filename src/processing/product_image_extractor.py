@@ -450,7 +450,7 @@ class ProductImageExtractor:
         
         # ПРИОРИТЕТ 1: Ищем СРАЗУ качественные изображения 600x600, 800x800 и т.д.
         logger.info("🔍 ЭТАП 1: Приоритетный поиск качественных изображений...")
-        quality_patterns = ['600x600', '800x800', '1000x1000', '500x500', '1024x1024']
+        quality_patterns = ['600x600', '800x800', '1000x1000', '500x500', '1024x1024', '400x400', '300x300']
         
         for pattern in quality_patterns:
             # Ищем в HTML напрямую (быстрее чем перебор)
@@ -461,57 +461,92 @@ class ProductImageExtractor:
                     src = img.get('src')
                     if src and self.is_valid_product_image(src):
                         image_url = self._ensure_absolute_url(src)
-                        logger.info(f"✅ Найдено качественное изображение {pattern}: {image_url}")
+                        logger.info(f"✅ ЭТАП 1: Найдено качественное изображение {pattern}: {image_url}")
                         break
                 if image_url:
                     break
         
-        # ПРИОРИТЕТ 2: Поиск через специфичные селекторы
+        # ПРИОРИТЕТ 2: Поиск через data-атрибуты и lazy loading
         if not image_url:
-            logger.info("🔍 ЭТАП 2: Поиск через специфичные селекторы...")
+            logger.info("🔍 ЭТАП 2: Поиск через data-атрибуты (data-src, data-lazy-src)...")
+            data_attrs = ['data-src', 'data-lazy-src', 'data-original', 'data-image']
+            
+            for attr in data_attrs:
+                images_with_data = soup.find_all('img', attrs={attr: True})
+                for img in images_with_data:
+                    src = img.get(attr)
+                    if src and '/content/images/' in src and self.is_valid_product_image(src):
+                        image_url = self._ensure_absolute_url(src)
+                        logger.info(f"✅ ЭТАП 2: Найдено через {attr}: {image_url}")
+                        break
+                if image_url:
+                    break
+        
+        # ПРИОРИТЕТ 3: Поиск через специфичные селекторы
+        if not image_url:
+            logger.info("🔍 ЭТАП 3: Поиск через специфичные селекторы...")
             priority_selectors = [
                 'img[src*="600x600"]',
-                '.product-gallery img[src*="600x600"]',
+                'img[src*="content/images"]',
+                '.product-gallery img',
                 '.tmGallery-image img',
                 '.tmGallery-main img',
-                '.product-photo img'
+                '.product-photo img',
+                '.product-image img',
+                '#product-image img'
             ]
             
             for selector in priority_selectors:
-                img = soup.select_one(selector)
-                if img and img.get('src'):
-                    src = img['src']
-                    # Проверяем что это НЕ миниатюра
-                    if not self._is_thumbnail(src) and self.is_valid_product_image(src):
+                imgs = soup.select(selector)
+                for img in imgs:
+                    src = img.get('src')
+                    if src and not self._is_thumbnail(src) and self.is_valid_product_image(src):
                         image_url = self._ensure_absolute_url(src)
-                        logger.info(f"✅ Найдено через селектор {selector}")
+                        logger.info(f"✅ ЭТАП 3: Найдено через селектор {selector}: {image_url}")
                         break
-        
-        # ПРИОРИТЕТ 3: Fallback - первое НЕ-миниатюрное изображение (ограничиваем до 30!)
-        if not image_url:
-            logger.info("🔍 ЭТАП 3: Fallback поиск (ограничено 30 изображениями)...")
-            all_images = soup.find_all('img', limit=30)  # Ограничиваем до 30!
-            
-            for img in all_images:
-                src = img.get('src', '')
-                if src and not self._is_thumbnail(src) and self.is_valid_product_image(src):
-                    image_url = self._ensure_absolute_url(src)
-                    logger.warning(f"⚠️ Используется fallback изображение")
+                if image_url:
                     break
         
-        # ПРИОРИТЕТ 4: TMGallery JavaScript (если ничего не найдено)
+        # ПРИОРИТЕТ 4: АГРЕССИВНЫЙ поиск ЛЮБЫХ изображений из /content/images/
         if not image_url:
-            logger.info("🔍 ЭТАП 4: TMGallery JavaScript...")
+            logger.info("🔍 ЭТАП 4: Агрессивный поиск ВСЕХ изображений из /content/images/...")
+            all_images = soup.find_all('img', src=True)
+            
+            candidates = []
+            for img in all_images:
+                src = img.get('src', '')
+                # Ищем ЛЮБЫЕ изображения из /content/images/
+                if src and '/content/images/' in src:
+                    # Пропускаем только миниатюры и логотипы
+                    if not self._is_thumbnail(src) and self.is_valid_product_image(src):
+                        absolute_url = self._ensure_absolute_url(src)
+                        # Даём приоритет изображениям с размерами
+                        priority = 100 if any(p in src for p in ['600x600', '800x800', '400x400']) else 50
+                        candidates.append((absolute_url, priority))
+                        logger.info(f"   📸 Кандидат: {absolute_url} (приоритет: {priority})")
+            
+            if candidates:
+                # Сортируем по приоритету и берём лучшее
+                candidates.sort(key=lambda x: x[1], reverse=True)
+                image_url = candidates[0][0]
+                logger.info(f"✅ ЭТАП 4: Найдено изображение из {len(candidates)} кандидатов (приоритет {candidates[0][1]}): {image_url}")
+        
+        # ПРИОРИТЕТ 5: TMGallery JavaScript (если ничего не найдено)
+        if not image_url:
+            logger.info("🔍 ЭТАП 5: TMGallery JavaScript...")
             image_url = self.extract_tmgallery_images_from_js(html_content)
             if image_url:
                 image_url = self._ensure_absolute_url(image_url)
                 logger.info(f"✅ TMGallery УСПЕХ: {image_url}")
         
-        # ПРИОРИТЕТ 5: Последний fallback
+        # ПРИОРИТЕТ 6: Последний fallback (спецефичные товары с маппингом)
         if not image_url:
-            logger.info("🔍 ЭТАП 5: Последний fallback...")
+            logger.info("🔍 ЭТАП 6: Последний fallback (специфичные товары)...")
             image_url = self.generate_fallback_image_url(product_url)
-            logger.info(f"⚠️ Используем fallback URL: {image_url}")
+            if image_url:
+                logger.info(f"✅ ЭТАП 6: Используем специфичный fallback: {image_url}")
+            else:
+                logger.warning(f"⚠️ ЭТАП 6: Fallback тоже не вернул изображение")
 
         # Создать ALT-тег
         alt_text = self.create_product_image_alt(product_title, locale)
@@ -520,7 +555,7 @@ class ProductImageExtractor:
         if image_url:
             logger.info(f"🎉 ФИНАЛЬНОЕ ИЗОБРАЖЕНИЕ: {image_url}")
         else:
-            logger.info(f"🚫 ИЗОБРАЖЕНИЕ НЕ НАЙДЕНО - ИСПОЛЬЗУЕМ ЗАГЛУШКУ")
+            logger.warning(f"🚫 ИЗОБРАЖЕНИЕ НЕ НАЙДЕНО - товар будет БЕЗ ФОТО")
             image_url = None
         
         result = {
