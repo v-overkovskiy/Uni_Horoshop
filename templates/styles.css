@@ -1,0 +1,308 @@
+/* Базовые стили для SEO-описаний товаров */
+:root {
+  --accent: #594141;
+  --text: #1e293b;
+  --bg: #f8fafc;
+  --border: #e6dddd;
+  --shadow: rgba(0, 0, 0, 0.04);
+  --shadow-hover: rgba(0, 0, 0, 0.05);
+}
+
+.ds-desc {
+  max-width: 980px;
+  margin: 0 auto 44px;
+  padding: 0 15px;
+  font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+}
+
+.prod-title {
+  font-size: clamp(1rem, 1.6vw + 0.55rem, 1.2rem);
+  line-height: 1.25;
+  margin: 0 0 12px;
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.ds-desc h2 {
+  font-size: clamp(1.1rem, 2.6vw + 0.6rem, 1.6rem);
+  margin: 26px 0 12px;
+  position: relative;
+  padding-bottom: 6px;
+  color: var(--accent);
+}
+
+.ds-desc h2:after {
+  content: "";
+  width: 60px;
+  height: 3px;
+  background: var(--accent);
+  position: absolute;
+  left: 0;
+  bottom: 0;
+}
+
+.ds-desc h3 {
+  font-size: clamp(1rem, 1.8vw + 0.55rem, 1.2rem);
+  margin: 16px 0 10px;
+  color: var(--accent);
+}
+
+.ds-desc p {
+  margin: 0 0 12px;
+  text-align: justify;
+}
+
+/* Характеристики */
+.specs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px 16px;
+  margin: 8px 0 14px;
+  list-style: none;
+  padding: 0;
+}
+
+.specs li {
+  background: #fff;
+  border: 1px solid var(--border);
+  padding: 12px 14px;
+  border-radius: 12px;
+  box-shadow: 0 1px 6px var(--shadow);
+}
+
+.specs li span {
+  display: block;
+  font-size: 0.92rem;
+  color: var(--accent);
+  opacity: 0.9;
+  margin-bottom: 4px;
+}
+
+.specs li strong {
+  font-weight: 700;
+}
+
+/* Заметки */
+.note {
+  padding: 12px 14px;
+  border-left: 4px solid var(--accent);
+  background: #f8f4f3;
+  border-radius: 0 10px 10px 0;
+  margin: 12px 0;
+}
+
+.small {
+  font-size: 0.95rem;
+  opacity: 0.85;
+}
+
+/* Преимущества */
+.advantages {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+  margin: 6px 0 18px;
+}
+
+.adv {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: 0 2px 10px var(--shadow-hover);
+}
+
+.adv .ico {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.adv h4 {
+  margin: 0 0 4px;
+  color: var(--accent);
+  font-size: 1rem;
+}
+
+.adv p {
+  margin: 0;
+}
+
+/* Шаги использования */
+.steps {
+  counter-reset: step;
+  list-style: none;
+  padding: 0;
+  margin: 16px 0;
+}
+
+.steps li {
+  counter-increment: step;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 12px 12px 46px;
+  margin: 10px 0;
+  position: relative;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+.steps li:before {
+  content: counter(step);
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+/* Проблемы/ошибки */
+.problems {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+  margin: 8px 0 18px;
+}
+
+.problem {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: 0 2px 10px var(--shadow-hover);
+}
+
+.problem .ico {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.problem h5 {
+  margin: 0 0 4px;
+  color: var(--accent);
+  font-size: 1rem;
+}
+
+.problem p {
+  margin: 0;
+}
+
+/* FAQ */
+.faq {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.faq .card {
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px 18px;
+  box-shadow: 0 2px 10px var(--shadow-hover);
+}
+
+.faq .card h4 {
+  margin: 0 0 8px;
+  color: var(--accent);
+  font-size: 1rem;
+}
+
+/* Главное изображение */
+.hero {
+  margin: 10px auto 18px;
+  max-width: clamp(320px, 92vw, 720px);
+}
+
+.hero img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+/* Адаптивность */
+@media (min-width: 1024px) {
+  .hero {
+    max-width: 800px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero {
+    max-width: 420px;
+  }
+}
+
+/* Скрытый контент для Telegram */
+.tg-only {
+  display: none !important;
+}
+
+/* Центрируем product-photo так же, как hero (глобально для всех карточек) */
+.ds-desc .product-photo,
+figure.hero{
+  display:block;
+  margin:14px auto 22px;
+  max-width:clamp(320px, 92vw, 720px);
+  width:min(92vw, clamp(320px, 92vw, 720px));
+}
+.ds-desc .product-photo img,
+figure.hero img{
+  display:block;
+  margin:0 auto;
+  width:100%;
+  height:auto;
+  border-radius:8px;
+  background:#fff;
+}
+/* На случай агрессивных стилей темы */
+.ds-desc .product-photo{ text-align:center !important; }
+.ds-desc .product-photo img{ float:none !important; }
+
+@media (min-width:1024px){
+  .ds-desc .product-photo{ max-width:800px; }
+}
+@media (max-width:480px){
+  .ds-desc .product-photo{ max-width:420px; }
+}
+

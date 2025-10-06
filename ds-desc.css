@@ -1,0 +1,140 @@
+/* Стили для фрагментов описания товара */
+.ds-desc {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.ds-desc .note-buy {
+    background-color: #f0f8ff;
+    border: 1px solid #4a90e2;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 20px;
+    font-weight: bold;
+    color: #2c5aa0;
+}
+
+.ds-desc .prod-title {
+    color: #2c5aa0;
+    font-size: 24px;
+    margin: 20px 0 15px 0;
+    border-bottom: 2px solid #4a90e2;
+    padding-bottom: 10px;
+}
+
+.ds-desc h2 {
+    color: #2c5aa0;
+    font-size: 20px;
+    margin: 25px 0 15px 0;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 5px;
+}
+
+.ds-desc .description {
+    margin-bottom: 20px;
+    text-align: justify;
+}
+
+.ds-desc .specs {
+    margin-bottom: 20px;
+}
+
+.ds-desc .spec-item {
+    display: flex;
+    margin-bottom: 8px;
+    padding: 5px 0;
+    border-bottom: 1px dotted #ccc;
+}
+
+.ds-desc .spec-label {
+    font-weight: bold;
+    min-width: 150px;
+    color: #555;
+}
+
+.ds-desc .spec-value {
+    color: #333;
+    flex: 1;
+}
+
+.ds-desc .advantages {
+    margin-bottom: 20px;
+    list-style: none;
+    padding: 0;
+}
+
+.ds-desc .advantage-item {
+    background-color: #f9f9f9;
+    border-left: 4px solid #4a90e2;
+    padding: 10px 15px;
+    margin-bottom: 8px;
+    border-radius: 0 5px 5px 0;
+}
+
+.ds-desc .faq {
+    margin-bottom: 20px;
+}
+
+.ds-desc .faq-item {
+    margin-bottom: 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.ds-desc .faq-question {
+    background-color: #f5f5f5;
+    margin: 0;
+    padding: 15px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #2c5aa0;
+    cursor: pointer;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.ds-desc .faq-answer {
+    margin: 0;
+    padding: 15px;
+    background-color: #fff;
+    color: #333;
+}
+
+.ds-desc .error-message {
+    color: #e74c3c;
+    font-style: italic;
+    text-align: center;
+    padding: 20px;
+    background-color: #fdf2f2;
+    border: 1px solid #f5c6cb;
+    border-radius: 5px;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .ds-desc {
+        padding: 10px;
+    }
+    
+    .ds-desc .prod-title {
+        font-size: 20px;
+    }
+    
+    .ds-desc h2 {
+        font-size: 18px;
+    }
+    
+    .ds-desc .spec-item {
+        flex-direction: column;
+    }
+    
+    .ds-desc .spec-label {
+        min-width: auto;
+        margin-bottom: 5px;
+    }
+}
+

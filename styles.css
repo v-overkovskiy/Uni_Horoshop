@@ -1,0 +1,230 @@
+/* Общие стили для карточек товаров */
+:root {
+    --accent: #594141;
+    --text: #1e293b;
+    --bg: #f8fafc;
+    --desc-max: 980px;
+    --hero-max: 780px;
+}
+
+.ds-desc {
+    max-width: var(--desc-max);
+    margin: 0 auto 48px;
+    padding: 0 15px;
+    font-family: Arial, Helvetica, sans-serif;
+    line-height: 1.7;
+    color: var(--text);
+}
+
+/* prod-title выше, чем h2, но без гиперболы на мобайле */
+.ds-desc .prod-title {
+    font-size: clamp(1.2rem, 2.2vw + .55rem, 1.7rem);
+    line-height: 1.25;
+    margin: 0 0 14px;
+    color: var(--accent);
+    font-weight: 600;
+    letter-spacing: .2px;
+    overflow-wrap: anywhere;
+    hyphens: auto;
+}
+
+/* Подзаголовки + больше воздуха */
+.ds-desc h2 {
+    font-size: clamp(1.1rem, 2.6vw + .6rem, 1.6rem);
+    margin: 32px 0 14px;
+    position: relative;
+    padding-bottom: 6px;
+    color: var(--accent);
+}
+
+.ds-desc h2:after {
+    content: "";
+    width: 60px;
+    height: 3px;
+    background: var(--accent);
+    position: absolute;
+    left: 0;
+    bottom: 0;
+}
+
+/* Карточки характеристик/FAQ/преимуществ оставляем как есть */
+.cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin: 6px 0 18px;
+}
+
+.card {
+    flex: 1 1 260px;
+    background: var(--bg);
+    border-left: 4px solid var(--accent);
+    border-radius: 12px;
+    padding: 16px 18px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.05);
+}
+
+.card h4 {
+    margin: 0 0 8px;
+    font-size: clamp(.95rem, 1.6vw + .5rem, 1.05rem);
+}
+
+/* Преимущества - стиль как FAQ */
+.cards.advantages {
+    margin: 6px 0 18px;
+    gap: 18px;
+}
+
+.specs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 16px;
+    list-style: none;
+    padding: 0;
+    margin: 0 0 18px;
+}
+
+/* убираем любые «палочки»/декоры темы в specs */
+.ds-desc ul.specs > li::before,
+.ds-desc ul.specs > li::after,
+.ds-desc ul.specs > li > span::before,
+.ds-desc ul.specs > li > span::after{
+  content:"" !important;
+  display:none !important;
+  background:none !important;
+  border:0 !important;
+  box-shadow:none !important;
+  width:0 !important; 
+  height:0 !important;
+}
+
+/* чтобы тема не добавляла отступы под «палочки» */
+.ds-desc ul.specs > li > span{
+  padding-left:0 !important;
+  text-decoration:none !important;
+  border:0 !important;
+}
+
+.specs li {
+    flex: 1 1 260px;
+    background: #fff;
+    border-left: 4px solid var(--accent);
+    border: 1px solid rgba(89,65,65,.2);
+    border-radius: 12px;
+    padding: 12px 14px;
+    box-shadow: 0 1px 6px rgba(89,65,65,.08);
+    display: block;
+}
+
+.specs li span {
+    display: block;
+    font-size: .92rem;
+    color: var(--accent);
+    opacity: .9;
+    margin-bottom: 4px;
+    min-width: auto;
+    margin-right: 0;
+}
+
+.specs li strong {
+    font-weight: 700;
+    color: var(--text);
+}
+
+/* ШАГИ: нативная нумерация браузера (надёжная) */
+ol.steps-native {
+    list-style: decimal;
+    padding-left: 28px;
+    margin: 0 0 10px;
+}
+
+ol.steps-native li {
+    margin: 0 0 10px;
+}
+
+ol.steps-native li::marker {
+    font-weight: 700;
+    color: var(--accent);
+}
+
+/* Абзацы описания: строго вровень с заголовком, с видимым интервалом */
+.ds-desc p {
+    margin: 0 0 16px;
+    text-align: justify;
+    text-indent: 0!important;
+    padding-left: 0!important;
+    margin-left: 0;
+}
+
+/* Коммерческий блок: мягкое закругление слева */
+.ds-desc .note-buy {
+    position: relative;
+    background: #f8f4f3;
+    border: 1px solid rgba(89,65,65,.2);
+    border-left: none !important;
+    border-radius: 8px;
+    padding: 14px 18px 14px 36px;
+    margin: 20px 0;
+    font: 400 .95rem/1.6 Arial, Helvetica, sans-serif;
+    box-shadow: none;
+}
+
+.ds-desc .note-buy::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    background: var(--accent);
+    border-radius: 8px 0 0 8px;
+}
+
+/* Hero изображения */
+figure.hero {
+    margin: 20px auto;
+    text-align: center;
+    max-width: var(--hero-max);
+}
+
+figure.hero img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,.1);
+}
+
+/* Скрытый блок для Telegram */
+.tg-only {
+    display: none !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .ds-desc {
+        padding: 0 10px;
+    }
+    
+    .cards {
+        flex-direction: column;
+    }
+    
+    .specs {
+        flex-direction: column;
+    }
+    
+    .specs li {
+        flex: none;
+    }
+}
+
+/* Микродисплеи */
+@media (max-width: 480px) {
+    .ds-desc .prod-title {
+        font-size: 1.18rem;
+    }
+    
+    .ds-desc h2 {
+        font-size: 1.06rem;
+    }
+}

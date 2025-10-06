@@ -1,0 +1,142 @@
+# Конфигурация пайплайна обработки товаров
+pipeline:
+  # Параметры производительности
+  performance:
+    concurrency: 6          # Количество одновременных задач
+    rps_limit: 3           # Запросов в секунду на домен
+    timeout: 15            # Таймаут запроса в секундах
+    retries: 2             # Количество ретраев
+    backoff_factor: 1.5    # Коэффициент экспоненциального бэк-оффа
+  
+  # Настройки HTTP клиента
+  http:
+    user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    headers:
+      Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
+      Accept-Language: "ru-RU,ru;q=0.9,en;q=0.8"
+      Accept-Encoding: "gzip, deflate, br"
+      Connection: "keep-alive"
+      Upgrade-Insecure-Requests: "1"
+  
+  # Настройки парсинга
+  parsing:
+    # Селекторы для извлечения данных
+    selectors:
+      title: "h1.prod-title"
+      description: "h2:contains('Описание'), h2:contains('Опис')"
+      specs: "h2:contains('Характеристики') + ul"
+      advantages: "h2:contains('Преимущества'), h2:contains('Переваги') + ul"
+      faq: "h2:contains('FAQ') + div"
+    
+    # Селекторы для галереи изображений
+    gallery:
+      active_slide: ".tmGallery-item.swiper-slide-active .tmGallery-image img[gallery-image]"
+      first_slide: ".tmGallery-item .tmGallery-image img[gallery-image]"
+      og_image: "meta[property='og:image']"
+    
+    # Фильтры для изображений
+    image_filters:
+      bad_patterns: ["sale", "promo", "banner", "action", "discount", "stock", "logo"]
+      supported_extensions: [".webp", ".avif", ".jpg", ".jpeg", ".png", ".gif"]
+  
+  # Настройки валидации
+  validation:
+    # Блокирующие ошибки
+    blocking_errors:
+      - "empty_title"
+      - "empty_description"
+      - "insufficient_faq"
+      - "insufficient_specs"
+      - "locale_intrusion"
+      - "promo_stubs"
+    
+    # Мягкие предупреждения
+    warnings:
+      - "missing_hero_image"
+      - "insufficient_advantages"
+      - "template_faq"
+    
+    # Правила для FAQ
+    faq:
+      min_items: 6
+      max_items: 6
+      template_questions:
+        - "как использовать"
+        - "як використовувати"
+        - "как применять"
+        - "як застосовувати"
+    
+    # Правила для описания
+    description:
+      min_paragraphs: 2
+      min_sentences_per_paragraph: 3
+      max_sentences_per_paragraph: 3
+  
+  # Настройки локализации
+  localization:
+    # Словари лейблов для RU
+    ru:
+      specs_labels:
+        brand: "Бренд"
+        type: "Тип"
+        material: "Материал"
+        volume: "Объем"
+        weight: "Вес"
+        color: "Цвет"
+        size: "Размер"
+        purpose: "Назначение"
+      
+      units:
+        volume: "мл"
+        weight: "г"
+        length: "см"
+    
+    # Словари лейблов для UA
+    ua:
+      specs_labels:
+        brand: "бренд"
+        type: "тип"
+        material: "матеріал"
+        volume: "об'єм"
+        weight: "вага"
+        color: "колір"
+        size: "розмір"
+        purpose: "призначення"
+      
+      units:
+        volume: "мл"
+        weight: "г"
+        length: "см"
+  
+  # Настройки экспорта
+  export:
+    output_format: "xlsx"
+    output_file: "descriptions.xlsx"
+    backup_enabled: true
+    backup_suffix: "_backup"
+    
+    # Колонки для экспорта
+    columns:
+      - "URL"
+      - "Title"
+      - "RU_HTML"
+      - "UA_HTML"
+      - "RU_Hero_Image"
+      - "UA_Hero_Image"
+      - "Processing_Time"
+      - "Validation_Status"
+      - "Errors"
+  
+  # Настройки кэширования
+  cache:
+    enabled: true
+    ttl: 3600  # Время жизни кэша в секундах
+    max_size: 1000  # Максимальный размер кэша
+  
+  # Настройки логирования
+  logging:
+    level: "INFO"
+    format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    file: "pipeline.log"
+    max_size: "10MB"
+    backup_count: 5

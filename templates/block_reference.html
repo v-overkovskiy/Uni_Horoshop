@@ -1,0 +1,99 @@
+<div class="ds-desc">
+  <p class="tg-only" style="display:none">{{TG_ONLY_ONE_OR_TWO_SENTENCES}}</p>
+
+  <style type="text/css">
+    :root{--accent:#594141;--text:#1e293b;--bg:#f8fafc}
+    .ds-desc{max-width:980px;margin:0 auto 44px;padding:0 15px;font-family:Arial,Helvetica,sans-serif;line-height:1.7;color:var(--text)}
+    .prod-title{font-size:clamp(1rem, 1.6vw + 0.55rem, 1.2rem);line-height:1.25;margin:0 0 12px;color:var(--accent);font-weight:600;letter-spacing:.2px;overflow-wrap:anywhere;word-break:break-word;hyphens:auto}
+    .hero{margin:10px auto 18px;max-width:clamp(320px, 92vw, 720px)}
+    .hero img{display:block;width:100%;height:auto;border-radius:8px}
+    @media (min-width:1024px){.hero{max-width:800px}}
+    @media (max-width:480px){.hero{max-width:420px}}
+    .ds-desc h2{font-size:clamp(1.1rem, 2.6vw + .6rem, 1.6rem);margin:26px 0 12px;position:relative;padding-bottom:6px;color:var(--accent)}
+    .ds-desc h2:after{content:"";width:60px;height:3px;background:var(--accent);position:absolute;left:0;bottom:0}
+    .ds-desc h3{font-size:clamp(1rem, 1.8vw + .55rem, 1.2rem);margin:16px 0 8px;color:var(--accent)}
+    .ds-desc p{margin:0 0 14px;text-align:justify}
+    .cards{display:flex;flex-wrap:wrap;gap:18px;margin:6px 0 18px}
+    .card{flex:1 1 260px;background:var(--bg);border-left:4px solid var(--accent);border-radius:12px;padding:16px 18px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+    .card h4{margin:0 0 8px;font-size:clamp(.95rem, 1.6vw + .5rem, 1.05rem)}
+    .ds-desc ul{padding-left:18px;margin:0 0 14px}
+    @media (max-width:480px){.ds-desc{padding:0 12px}.cards{gap:14px}}
+  </style>
+
+  <h2 class="prod-title">{{TITLE}}</h2>
+
+  <h2>{{LANG_DEP_TITLE_DESCRIPTION}}</h2>
+  {{VALUE_PROP_4_6_SENTENCES_NO_FLUFF}}
+
+  {{#if SPECS_5_8_ONLY_FACTS}}
+  <h2>{{LANG_DEP_TITLE_SPECS}}</h2>
+  <ul>
+    {{#each SPECS_5_8_ONLY_FACTS}}
+      <li><strong>{{label}}:</strong> {{value}}</li>
+    {{/each}}
+  </ul>
+  {{/if}}
+
+  {{#if BENEFITS_3_6}}
+  <h2>{{LANG_DEP_TITLE_BENEFITS}}</h2>
+  <div class="cards">
+    {{#each BENEFITS_3_6}}
+      <div class="card">
+        <h4>{{h4}}</h4>
+        <p>{{p}}</p>
+      </div>
+    {{/each}}
+  </div>
+  {{/if}}
+
+  {{#if HOWTO_STEPS_3_5}}
+  <h2>{{LANG_DEP_TITLE_HOWTO}}</h2>
+  <div class="cards">
+    {{#each HOWTO_STEPS_3_5}}
+      <div class="card">
+        <h4>Шаг {{@index}}</h4>
+        <p>{{this}}</p>
+      </div>
+    {{/each}}
+  </div>
+  {{/if}}
+
+  {{#if MISTAKES_2_4}}
+  <h2>{{LANG_DEP_TITLE_MISTAKES}}</h2>
+  <div class="cards">
+    {{#each MISTAKES_2_4}}
+      <div class="card">
+        <h4>{{h5}}</h4>
+        <p>{{p}}</p>
+      </div>
+    {{/each}}
+  </div>
+  {{/if}}
+
+  {{#if FAQ_4_6}}
+  <h2>FAQ — Часто задаваемые вопросы</h2>
+  <div class="faq-section">
+    {{#each FAQ_4_6}}
+      <div class="faq-item">
+        <div class="faq-question">{{q}}</div>
+        <div class="faq-answer">{{a}}</div>
+      </div>
+    {{/each}}
+  </div>
+  {{/if}}
+
+  {{#if COMMERCIAL_SENTENCE}}
+  <p><strong>{{COMMERCIAL_SENTENCE}}</strong></p>
+  {{/if}}
+
+</div>
+
+<figure class="hero">
+  <img alt="{{ALT_FORMULA}}" loading="lazy" src="{{MAIN_IMAGE_URL}}" />
+</figure>
+
+
+
+
+
+

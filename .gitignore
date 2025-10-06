@@ -1,0 +1,26 @@
+# Секреты
+.env
+.env.local
+*.key
+
+# Кэш и логи
+pycache/
+*.pyc
+*.pyo
+*.log
+cache/
+*.log
+
+# Результаты
+descriptions_*.xlsx
+*.xlsx
+llm_usage_stats.json
+
+# IDE
+.cursor/
+.vscode/
+.idea/
+
+# Тестовые файлы
+test_*.txt
+test_*.py

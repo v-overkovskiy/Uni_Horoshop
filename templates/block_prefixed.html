@@ -1,0 +1,104 @@
+<style type="text/css">
+  *,*::before,*::after{box-sizing:border-box}
+  :root{--accent:#594141;--text:#1e293b;--bg:#f8fafc}
+  .ds-desc{max-width:980px;margin:0 auto 44px;padding:0 15px;font-family:Arial,Helvetica,sans-serif;line-height:1.7;color:var(--text)}
+  .ds-desc .prod-title{font-size:clamp(1rem,1.6vw + .55rem,1.2rem);line-height:1.25;margin:0 0 12px;color:var(--accent);font-weight:600;letter-spacing:.2px;overflow-wrap:anywhere;word-break:break-word;hyphens:auto}
+  .ds-desc h2{font-size:clamp(1.1rem,2.6vw + .6rem,1.6rem);margin:26px 0 12px;position:relative;padding-bottom:6px;color:var(--accent)}
+  .ds-desc h2:after{content:"";width:60px;height:3px;background:var(--accent);position:absolute;left:0;bottom:0}
+  .ds-desc h3{font-size:clamp(1rem,1.8vw + .55rem,1.2rem);margin:16px 0 10px;color:var(--accent)}
+  .ds-desc p{margin:0 0 12px;text-align:justify}
+
+  .ds-desc .ds-specs{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px 16px;margin:8px 0 14px;list-style:none;padding:0}
+  .ds-desc .ds-specs li{background:#fff;border:1px solid #e6dddd;padding:12px 14px;border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.04)}
+  .ds-desc .ds-specs li span{display:block;font-size:.92rem;color:var(--accent);opacity:.9;margin-bottom:4px}
+  .ds-desc .ds-specs li strong{font-weight:700}
+
+  .ds-desc .note{padding:12px 14px;border-left:4px solid var(--accent);background:#f8f4f3;border-radius:0 10px 10px 0;margin:12px 0}
+  .ds-desc .small{font-size:.95rem;opacity:.85}
+
+  .ds-desc .ds-advantages{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin:6px 0 18px}
+  .ds-desc .ds-adv{display:flex;gap:12px;align-items:flex-start;background:#fff;border:1px solid #e6dddd;border-left:4px solid var(--accent);border-radius:12px;padding:14px 16px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+  .ds-desc .ds-adv .ds-ico{flex:0 0 28px;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+  .ds-desc .ds-adv h4{margin:0 0 4px;color:var(--accent);font-size:1rem}
+  .ds-desc .ds-adv p{margin:0}
+
+  .ds-desc .ds-steps{counter-reset:step;list-style:none;padding:0;margin:16px 0}
+  .ds-desc .ds-steps li{counter-increment:step;background:#fff;border:1px solid #e6dddd;border-radius:12px;padding:12px 12px 12px 46px;margin:10px 0;position:relative;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+  .ds-desc .ds-steps li:before{content:counter(step);position:absolute;left:12px;top:12px;width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600}
+
+  .ds-desc .ds-problems{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin:8px 0 18px}
+  .ds-desc .ds-problem{display:flex;gap:12px;align-items:flex-start;background:#fff;border:1px solid #e6dddd;border-left:4px solid var(--accent);border-radius:12px;padding:14px 16px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+  .ds-desc .ds-problem .ds-ico{flex:0 0 28px;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+  .ds-desc .ds-problem h5{margin:0 0 4px;color:var(--accent);font-size:1rem}
+  .ds-desc .ds-problem p{margin:0}
+
+  .ds-desc .ds-faq{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+  .ds-desc .ds-card{border:1px solid #e6dddd;background:#fff;border-radius:12px;padding:16px 18px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+  .ds-desc .ds-card h4{margin:0 0 8px;color:var(--accent);font-size:1rem}
+
+  .ds-desc .ds-hero{margin:10px auto 18px;max-width:clamp(320px,92vw,720px)}
+  .ds-desc .ds-hero img{display:block;width:100%;height:auto;border-radius:8px;border:1px solid #e6dddd}
+  @media (min-width:1024px){.ds-desc .ds-hero{max-width:800px}}
+  @media (max-width:480px){.ds-desc .ds-hero{max-width:420px}}
+</style>
+
+<div class="ds-desc">
+  <p class="tg-only" style="display:none">{{TG_ONLY_ONE_OR_TWO_SENTENCES}}</p>
+
+  <h2 class="prod-title">{{TITLE}}</h2>
+
+  <h2>{{LANG_DEP_TITLE_DESCRIPTION}}</h2>
+  <p>{{VALUE_PROP_4_6_SENTENCES_NO_FLUFF}}</p>
+  <p class="note small">{{COMMERCIAL_SENTENCE}}</p>
+
+  <h3>{{LANG_DEP_TITLE_SPECS}}</h3>
+  <ul class="ds-specs">
+    {{#each SPECS_5_8_ONLY_FACTS}}
+      <li><span>{{label}}:</span> <strong>{{value}}</strong></li>
+    {{/each}}
+  </ul>
+
+  <h3>{{LANG_DEP_TITLE_BENEFITS}}</h3>
+  <div class="ds-advantages">
+    {{#each BENEFITS_3_6}}
+      <div class="ds-adv"><div class="ds-ico">✓</div><div><h4>{{h4}}</h4><p>{{p}}</p></div></div>
+    {{/each}}
+  </div>
+
+  {{#if HOWTO_STEPS_3_5}}
+  <h3>{{LANG_DEP_TITLE_HOWTO}}</h3>
+  <ol class="ds-steps">
+    {{#each HOWTO_STEPS_3_5}}
+      <li>{{this}}</li>
+    {{/each}}
+  </ol>
+  {{/if}}
+
+  {{#if MISTAKES_2_4}}
+  <h3>{{LANG_DEP_TITLE_MISTAKES}}</h3>
+  <div class="ds-problems">
+    {{#each MISTAKES_2_4}}
+      <div class="ds-problem"><div class="ds-ico">!</div><div><h5>{{h5}}</h5><p>{{p}}</p></div></div>
+    {{/each}}
+  </div>
+  {{/if}}
+
+  <h2>FAQ</h2>
+  <div class="faq-section">
+    {{#each FAQ_4_6}}
+      <div class="faq-item">
+        <div class="faq-question">{{q}}</div>
+        <div class="faq-answer">{{a}}</div>
+      </div>
+    {{/each}}
+  </div>
+
+  <figure class="ds-hero">
+    <img src="{{MAIN_IMAGE_URL}}" alt="{{ALT_FORMULA}}">
+  </figure>
+</div>
+
+
+
+
+
