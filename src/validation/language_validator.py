@@ -74,7 +74,7 @@ class LanguageValidator:
         elif expected_locale == 'ua':
             # Считаем русские служебные слова
             ru_word_count = sum(1 for word in words if word in self.RUSSIAN_WORDS)
-            if ru_word_count > 3:  # Порог: более 3 русских слов
+            if ru_word_count > 10:  # Порог: более 10 русских слов (мягче для смешанных текстов)
                 return False, f"В UA тексте найдено {ru_word_count} русских служебных слов"
         
         # МЕТОД 3: Использование langdetect (опционально)

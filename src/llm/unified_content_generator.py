@@ -254,7 +254,7 @@ class UnifiedContentGenerator:
                     parsed_content = await self._retry_with_strict_language(product_facts, locale, lang_error)
                 
                     # КРИТИЧНО: Строгая валидация результата
-                    if not self.validator.validate_all_content(parsed_content, product_facts, locale):
+                    if not self.validator.validate_all_content(parsed_content, locale):
                         raise ValueError("❌ ЗАПРЕЩЕНО: Сгенерированный контент не прошел валидацию")
                 
                 logger.info(f"✅ Объединенный контент сгенерирован для {locale}: {len(parsed_content)} блоков")

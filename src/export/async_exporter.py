@@ -150,6 +150,7 @@ class AsyncExporter:
                     row = {
                         'Input_Index': result.get('input_index', 0),
                         'Status': result.get('status', 'unknown'),
+                        'Processed_By_Model': result.get('processed_by_model', 'gpt-4o-mini'),
                         'Image_Status': image_status,
                         'URL': result.get('url', ''),
                         'RU_Title': ru_title,

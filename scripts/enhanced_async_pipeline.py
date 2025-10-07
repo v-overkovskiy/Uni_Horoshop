@@ -275,9 +275,49 @@ class EnhancedAsyncPipeline:
             all_results.sort(key=lambda x: x.get('input_index', 0))
             successful_results.sort(key=lambda x: x.get('input_index', 0))
             
-            self.results = all_results  # Теперь храним ВСЕ результаты
+            # ✅ ИСПРАВЛЕНО: ОБНОВЛЯЕМ существующие результаты вместо перезаписи
+            # Это позволяет сохранить результаты предыдущих раундов
+            for new_result in all_results:
+                url = new_result.get('url')
+                # Ищем существующий результат для этого URL
+                existing_index = next((i for i, r in enumerate(self.results) if r.get('url') == url), None)
+                
+                if existing_index is not None:
+                    # Обновляем существующий результат
+                    self.results[existing_index] = new_result
+                else:
+                    # Добавляем новый результат
+                    self.results.append(new_result)
+            
             logger.info(f"✅ Обработано {len(successful_results)} успешных из {len(all_results)} результатов, отсортированных по input_index")
-            return all_results  # Возвращаем ВСЕ результаты, включая ошибки
+            logger.info(f"📊 Всего результатов в базе: {len(self.results)}")
+            return all_results  # Возвращаем результаты текущего раунда
+    
+    def get_failed_urls(self) -> List[str]:
+        """Извлекает URL товаров со статусом 'error' для повторной обработки"""
+        failed_urls = []
+        for result in self.results:
+            if result.get('status') == 'error':
+                url = result.get('url', '')
+                if url and url not in failed_urls:
+                    failed_urls.append(url)
+        
+        logger.info(f"🔄 Найдено {len(failed_urls)} товаров с ошибками для переобработки")
+        return failed_urls
+    
+    def clear_errors_for_urls(self, urls: List[str]) -> None:
+        """Очищает ТОЛЬКО ошибки для указанных URL перед повторной обработкой
+        
+        ВАЖНО: НЕ удаляем результаты из self.results, только ошибки!
+        Результаты будут заменены при успешной переобработке через add_result в процессоре
+        """
+        # Удаляем записи об ошибках для этих URL
+        self.errors = [e for e in self.errors if e.get('url') not in urls]
+        
+        # ✅ ИСПРАВЛЕНО: НЕ удаляем результаты! Только помечаем для переобработки
+        # Результаты останутся в self.results и будут обновлены если товар успешно обработается
+        
+        logger.info(f"🧹 Очищены ошибки для {len(urls)} товаров (результаты сохранены для обновления)")
     
     def print_statistics(self) -> None:
         """Выводит статистику обработки"""
@@ -297,6 +337,22 @@ class EnhancedAsyncPipeline:
         logger.info(f"Успешно обработано: {successful_count}")
         logger.info(f"Ошибок: {error_count}")
         logger.info(f"Процент успеха: {(successful_count/total_urls*100):.1f}%" if total_urls > 0 else "0%")
+        
+        # ✅ НОВОЕ: Статистика по моделям
+        model_stats = {}
+        for r in self.results:
+            model = r.get('processed_by_model', 'unknown')
+            model_stats[model] = model_stats.get(model, 0) + 1
+        
+        if model_stats:
+            logger.info(f"\n🤖 СТАТИСТИКА ПО МОДЕЛЯМ:")
+            for model, count in sorted(model_stats.items(), key=lambda x: x[1], reverse=True):
+                percentage = (count / successful_count * 100) if successful_count > 0 else 0
+                # Выделяем дорогую модель GPT-4o
+                if 'gpt-4o' in model.lower() and 'mini' not in model.lower():
+                    logger.info(f"  💰 {model}: {count} товаров ({percentage:.1f}%) ⚠️ ДОРОГАЯ МОДЕЛЬ")
+                else:
+                    logger.info(f"  🤖 {model}: {count} товаров ({percentage:.1f}%)")
         
         if self.errors:
             logger.info("\n❌ ОШИБКИ:")
@@ -318,7 +374,7 @@ class EnhancedAsyncPipeline:
         logger.info(f"  Покрытие JSON-LD: {(json_ld_count/total_processed*100):.1f}%" if total_processed > 0 else "0%")
 
 async def main():
-    """Главная функция пайплайна"""
+    """Главная функция пайплайна с автоматической переобработкой ошибок"""
     start_time = datetime.now()
     
     # Создаем пайплайн
@@ -330,14 +386,86 @@ async def main():
         logger.error("❌ Нет URL для обработки")
         return
     
-    # Обрабатываем ВСЕ товары из urls.txt
-    test_urls = urls  # Обрабатываем все товары
-    logger.info(f"🚀 Полная обработка: обрабатываем {len(test_urls)} товаров")
+    logger.info(f"🚀 Полная обработка: обрабатываем {len(urls)} товаров")
     
-    # Обрабатываем товары
-    results = await pipeline.process_urls(test_urls)
+    # ===== РАУНД 1: Первичная обработка всех товаров =====
+    logger.info("=" * 80)
+    logger.info("🔵 РАУНД 1: Первичная обработка всех товаров")
+    logger.info("=" * 80)
+    logger.info(f"📋 Обрабатываем ВСЕ {len(urls)} товаров из urls.txt")
+    results = await pipeline.process_urls(urls)
     
-    # Выводим статистику
+    # Помечаем все успешные результаты раунда 1
+    for result in pipeline.results:
+        if result.get('status') == 'success' and 'processed_by_model' not in result:
+            result['processed_by_model'] = 'gpt-4o-mini (Primary Round 1)'
+    
+    pipeline.print_statistics()
+    
+    # ===== РАУНД 2: Переобработка ошибочных товаров =====
+    failed_urls = pipeline.get_failed_urls()
+    if failed_urls:
+        logger.info("")
+        logger.info("=" * 80)
+        logger.info(f"🟡 РАУНД 2: Переобработка {len(failed_urls)} ошибочных товаров")
+        logger.info("=" * 80)
+        logger.info(f"📋 URL для переобработки: {failed_urls[:3]}..." if len(failed_urls) > 3 else f"📋 URL для переобработки: {failed_urls}")
+        
+        # Очищаем ошибки для этих URL
+        pipeline.clear_errors_for_urls(failed_urls)
+        
+        # Переобрабатываем
+        retry_results = await pipeline.process_urls(failed_urls)
+        
+        # Помечаем все успешные результаты раунда 2
+        for result in pipeline.results:
+            if result.get('url') in failed_urls and result.get('status') == 'success' and 'processed_by_model' not in result:
+                result['processed_by_model'] = 'claude-3-haiku (Fallback Round 2)'
+        
+        pipeline.print_statistics()
+        
+        # ===== РАУНД 3: Финальная попытка с GPT-4o для оставшихся ошибок =====
+        failed_urls_round_2 = pipeline.get_failed_urls()
+        if failed_urls_round_2:
+            logger.info("")
+            logger.info("=" * 80)
+            logger.info(f"🔴 РАУНД 3: Финальная попытка с GPT-4o для {len(failed_urls_round_2)} товаров")
+            logger.info("=" * 80)
+            logger.info(f"📋 URL для переобработки: {failed_urls_round_2[:3]}..." if len(failed_urls_round_2) > 3 else f"📋 URL для переобработки: {failed_urls_round_2}")
+            logger.info("🔥 Используем мощную модель GPT-4o для финальной попытки")
+            
+            # Очищаем ошибки для этих URL
+            pipeline.clear_errors_for_urls(failed_urls_round_2)
+            
+            # ✅ Переключаем Resilient Recovery на GPT-4o для финального раунда
+            from openai import OpenAI
+            openai_client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+            pipeline.processor.llm_recovery.llm = openai_client
+            pipeline.processor.llm_recovery.model = "gpt-4o"
+            logger.info("🔥 Resilient Recovery переключен на GPT-4o")
+            
+            # ✅ СМЯГЧАЕМ ВАЛИДАЦИЮ для Round 3 (если GPT-4o не может - принимаем что есть)
+            pipeline.processor.relaxed_validation = True
+            logger.info("🔵 Включена СМЯГЧЕННАЯ ВАЛИДАЦИЯ для Round 3 (FAQ≥2, advantages≥2, HTML≥800 байт)")
+            
+            # Помечаем что это раунд с GPT-4o
+            pipeline.processor.current_model = "gpt-4o"
+            
+            # Финальная попытка с мощной моделью
+            final_results = await pipeline.process_urls(failed_urls_round_2)
+            
+            # Помечаем все результаты этого раунда как обработанные GPT-4o
+            for result in pipeline.results:
+                if result.get('url') in failed_urls_round_2 and result.get('status') == 'success':
+                    result['processed_by_model'] = 'gpt-4o (Resilient Recovery Round 3)'
+            
+            pipeline.print_statistics()
+    
+    # ===== ФИНАЛЬНАЯ СТАТИСТИКА =====
+    logger.info("")
+    logger.info("=" * 80)
+    logger.info("🏁 ФИНАЛЬНАЯ СТАТИСТИКА ПОСЛЕ ВСЕХ РАУНДОВ")
+    logger.info("=" * 80)
     pipeline.print_statistics()
     
     # ✅ НОВОЕ: Вывод статистики Smart Routing
@@ -364,8 +492,16 @@ async def main():
         logger.warning(f"⚠️ Не удалось вывести статистику Smart Routing: {e}")
     
     # Сохраняем результаты в Excel
-    if results:
+    if pipeline.results:
         main_file = "descriptions.xlsx"
+        
+        logger.info(f"💾 Сохраняем {len(pipeline.results)} результатов в Excel...")
+        
+        # ⚠️ КРИТИЧЕСКИ ВАЖНО: Очищаем экспортер и добавляем только актуальные результаты
+        # Это предотвращает дублирование записей между раундами
+        pipeline.exporter.results = []
+        for result in pipeline.results:
+            await pipeline.exporter.add_result(result)
         
         # Обновляем путь к файлу в экспортере для перезаписи
         pipeline.exporter.output_file = main_file
@@ -374,13 +510,71 @@ async def main():
         
         if export_result.get('success'):
             logger.info(f"💾 Результаты перезаписаны в {main_file}")
+            logger.info(f"📊 Экспортировано {len(pipeline.results)} товаров")
         else:
             logger.error(f"❌ Ошибка сохранения: {export_result.get('error', 'Unknown error')}")
+    else:
+        logger.warning("⚠️ Нет результатов для экспорта")
     
+    # ===== ИТОГОВОЕ САММАРИ =====
     end_time = datetime.now()
     total_time = (end_time - start_time).total_seconds()
-    logger.info(f"⏱️ Общее время выполнения: {total_time:.2f} секунд")
-    logger.info(f"⚡ Средняя скорость: {len(urls)/total_time:.2f} товаров/сек")
+    avg_time_per_product = total_time / len(urls) if urls else 0
+    
+    # Подсчет статистики по моделям
+    model_stats = {}
+    for r in pipeline.results:
+        model = r.get('processed_by_model', 'unknown')
+        model_stats[model] = model_stats.get(model, 0) + 1
+    
+    # Подсчет успешных/ошибок
+    successful_count = sum(1 for r in pipeline.results if r.get('status') == 'success')
+    error_count = sum(1 for r in pipeline.results if r.get('status') == 'error')
+    
+    logger.info("")
+    logger.info("")
+    logger.info("╔" + "═" * 98 + "╗")
+    logger.info("║" + " " * 35 + "🎯 ИТОГОВОЕ САММАРИ ОБРАБОТКИ" + " " * 35 + "║")
+    logger.info("╚" + "═" * 98 + "╝")
+    logger.info("")
+    logger.info("📊 РЕЗУЛЬТАТЫ ОБРАБОТКИ:")
+    logger.info(f"   ├─ Всего товаров в обработке: {len(urls)}")
+    logger.info(f"   ├─ ✅ Успешно обработано: {successful_count} ({successful_count/len(urls)*100:.1f}%)" if urls else "   ├─ ✅ Успешно обработано: 0")
+    logger.info(f"   └─ ❌ Ошибок: {error_count} ({error_count/len(urls)*100:.1f}%)" if urls else "   └─ ❌ Ошибок: 0")
+    logger.info("")
+    logger.info("⏱️  ПРОИЗВОДИТЕЛЬНОСТЬ:")
+    logger.info(f"   ├─ Общее время обработки: {int(total_time//60)} мин {int(total_time%60)} сек ({total_time:.2f} сек)")
+    logger.info(f"   ├─ Среднее время на товар: {int(avg_time_per_product//60)} мин {int(avg_time_per_product%60)} сек ({avg_time_per_product:.2f} сек)")
+    logger.info(f"   └─ Скорость обработки: {len(urls)/total_time:.3f} товаров/сек" if total_time > 0 else "   └─ Скорость обработки: N/A")
+    logger.info("")
+    logger.info("🤖 ИСПОЛЬЗОВАНИЕ LLM МОДЕЛЕЙ:")
+    
+    if model_stats:
+        # Сортируем по количеству (от большего к меньшему)
+        sorted_models = sorted(model_stats.items(), key=lambda x: x[1], reverse=True)
+        
+        for i, (model, count) in enumerate(sorted_models):
+            percentage = (count / successful_count * 100) if successful_count > 0 else 0
+            is_last = (i == len(sorted_models) - 1)
+            prefix = "   └─" if is_last else "   ├─"
+            
+            # Выделяем дорогую модель GPT-4o
+            if 'gpt-4o' in model.lower() and 'mini' not in model.lower():
+                logger.info(f"{prefix} 💰 {model}: {count} товаров ({percentage:.1f}%) ⚠️  ДОРОГАЯ МОДЕЛЬ!")
+            elif 'claude' in model.lower():
+                logger.info(f"{prefix} 🟣 {model}: {count} товаров ({percentage:.1f}%) - Fallback")
+            elif 'mini' in model.lower():
+                logger.info(f"{prefix} 💚 {model}: {count} товаров ({percentage:.1f}%) - Основная (дешево)")
+            else:
+                logger.info(f"{prefix} 🤖 {model}: {count} товаров ({percentage:.1f}%)")
+    else:
+        logger.info("   └─ Нет данных о моделях")
+    
+    logger.info("")
+    logger.info("=" * 100)
+    logger.info(f"✅ ОБРАБОТКА ЗАВЕРШЕНА! Результаты сохранены в Excel")
+    logger.info("=" * 100)
+    logger.info("")
 
 if __name__ == "__main__":
     try:

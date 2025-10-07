@@ -56,8 +56,8 @@ class SmartLLMClient:
             api_key=os.getenv('ANTHROPIC_API_KEY')
         )
         
-        # Настройки
-        self.smart_routing_enabled = os.getenv('SMART_ROUTING_ENABLED', 'true').lower() == 'true'
+        # Настройки - ОТКЛЮЧАЕМ smart routing, все товары идут на OpenAI
+        self.smart_routing_enabled = False  # Принудительно отключено - все на OpenAI
         self.cost_tracking_enabled = os.getenv('COST_TRACKING_ENABLED', 'true').lower() == 'true'
         
         # Расширенный blacklist шаблонных фраз
@@ -312,11 +312,9 @@ class SmartLLMClient:
     ) -> str:
         """Генерация через Claude с автоматическим выбором доступной модели"""
         
-        # Список моделей для попытки (от лучшей к худшей)
+        # Список моделей для попытки (от лучшей к худшей) - только работающие
         claude_models = [
-            "claude-3-5-sonnet-20240620",  # Наиболее мощная
-            "claude-3-sonnet-20240229",    # Стабильная
-            "claude-3-haiku-20240307",     # Быстрая (мы знаем что работает)
+            "claude-3-haiku-20240307",     # Единственная работающая модель
         ]
         
         for model in claude_models:
