@@ -3,9 +3,32 @@
 """
 import asyncio
 import logging
+import re
 from typing import Dict, Any, Optional, List
 import httpx
 from concurrent.futures import ThreadPoolExecutor
+
+# ===== НОРМАЛИЗАЦИЯ ДЛЯ ROUND 3 =====
+# Заменяем украинские буквы на русские для упрямых товаров
+UA_TO_RU_MAP = str.maketrans({
+    'і': 'и', 'І': 'И',
+    'ї': 'и', 'Ї': 'И',
+    'є': 'е', 'Є': 'Е',
+    'ґ': 'г', 'Ґ': 'Г',
+})
+
+def normalize_ru_specs_round3(specs: List[Dict]) -> List[Dict]:
+    """Нормализация характеристик для Round 3 - заменяем украинские буквы на русские"""
+    if not specs:
+        return specs
+    
+    normalized = []
+    for spec in specs:
+        label = str(spec.get('label', '')).translate(UA_TO_RU_MAP)
+        value = str(spec.get('value', '')).translate(UA_TO_RU_MAP)
+        normalized.append({'label': label, 'value': value})
+    
+    return normalized
 
 from src.fetcher.fallback_fetcher import FallbackFetcher
 from src.llm.async_content_generator import AsyncLLMContentGenerator
@@ -49,6 +72,9 @@ class AsyncProductProcessor:
         self.resilient_fetcher = ResilientFetcher(timeout=30, max_retries=3)
         self.llm_recovery = LLMRecovery()
         
+        # Режим валидации (может быть установлен в relaxed для Round 3)
+        self.relaxed_validation = False
+        
         self.executor = ThreadPoolExecutor(max_workers=4)
     
     async def process_product_with_validation(self, product_url: str, client: httpx.AsyncClient, 
@@ -68,8 +94,8 @@ class AsyncProductProcessor:
             }
             return result
 
-        # Валидация результата
-        is_valid, issues = self._validate_content_quality(result)
+        # Валидация результата (с учетом relaxed_mode для Round 3)
+        is_valid, issues = self._validate_content_quality(result, relaxed_mode=self.relaxed_validation)
 
         if is_valid:
             result['status'] = 'success'
@@ -148,8 +174,8 @@ class AsyncProductProcessor:
                 
                 # ✅ КРИТИЧНО: Валидируем результат recovery ПЕРЕД возвратом
                 if recovery_result.get('success', False):
-                    # Проверяем качество контента
-                    is_valid, issues = self._validate_content_quality(recovery_result)
+                    # Проверяем качество контента (с учетом relaxed_mode для Round 3)
+                    is_valid, issues = self._validate_content_quality(recovery_result, relaxed_mode=self.relaxed_validation)
                     
                     if is_valid:
                         logger.info(f"✅ Resilient recovery успешен и прошёл валидацию: {product_url}")
@@ -203,21 +229,31 @@ class AsyncProductProcessor:
             logger.error(f"❌ ВАЛИДАЦИЯ: Ошибка валидации: {e}")
             return False
     
-    def _validate_content_quality(self, result: Dict[str, Any]) -> tuple[bool, list[str]]:
-        """Строгая валидация качества контента"""
+    def _validate_content_quality(self, result: Dict[str, Any], relaxed_mode: bool = False) -> tuple[bool, list[str]]:
+        """Валидация качества контента
+        
+        Args:
+            result: Результат обработки
+            relaxed_mode: Если True, применяем смягченные требования (для Round 3 с GPT-4o)
+        """
         issues = []
         
         ru_html = result.get('ru_html', '')
         ua_html = result.get('ua_html', '')
         
+        # Устанавливаем пороги в зависимости от режима
+        min_faq = 2 if relaxed_mode else 4
+        min_benefits = 2 if relaxed_mode else 3
+        min_html_size = 800 if relaxed_mode else 1500
+        
         # 1. FAQ - критически важно
         ru_faq = ru_html.count('<div class="faq-item">')
         ua_faq = ua_html.count('<div class="faq-item">')
         
-        if ru_faq < 4:
-            issues.append(f"RU FAQ: {ru_faq} (нужно ≥4)")
-        if ua_faq < 4:
-            issues.append(f"UA FAQ: {ua_faq} (нужно ≥4)")
+        if ru_faq < min_faq:
+            issues.append(f"RU FAQ: {ru_faq} (нужно ≥{min_faq})")
+        if ua_faq < min_faq:
+            issues.append(f"UA FAQ: {ua_faq} (нужно ≥{min_faq})")
         
         # 2. Описания (должно быть минимум 2 <p>)
         if ru_html.count('</p>') < 2:
@@ -229,16 +265,16 @@ class AsyncProductProcessor:
         ru_benefits = ru_html.count('<div class="card"><h4>')
         ua_benefits = ua_html.count('<div class="card"><h4>')
         
-        if ru_benefits < 3:
-            issues.append(f"RU преимущества: {ru_benefits} (нужно ≥3)")
-        if ua_benefits < 3:
-            issues.append(f"UA преимущества: {ua_benefits} (нужно ≥3)")
+        if ru_benefits < min_benefits:
+            issues.append(f"RU преимущества: {ru_benefits} (нужно ≥{min_benefits})")
+        if ua_benefits < min_benefits:
+            issues.append(f"UA преимущества: {ua_benefits} (нужно ≥{min_benefits})")
         
-        # 4. Минимальный размер (меньше 1500 байт = почти пусто)
-        if len(ru_html) < 1500:
-            issues.append(f"RU HTML слишком короткий: {len(ru_html)} байт")
-        if len(ua_html) < 1500:
-            issues.append(f"UA HTML слишком короткий: {len(ua_html)} байт")
+        # 4. Минимальный размер
+        if len(ru_html) < min_html_size:
+            issues.append(f"RU HTML слишком короткий: {len(ru_html)} байт (минимум {min_html_size})")
+        if len(ua_html) < min_html_size:
+            issues.append(f"UA HTML слишком короткий: {len(ua_html)} байт (минимум {min_html_size})")
         
         # 5. Проверяем что нет заглушек
         if 'error-message' in ru_html or 'error-message' in ua_html:
@@ -249,6 +285,65 @@ class AsyncProductProcessor:
             issues.append("RU FAQ заголовок есть, но FAQ отсутствуют")
         if 'FAQ</h2>' in ua_html and ua_faq == 0:
             issues.append("UA FAQ заголовок есть, но FAQ отсутствуют")
+        
+        # ============ СТРОГИЕ ПРОВЕРКИ (работают ВСЕГДА) ============
+        # Эти проблемы НЕ ДОПУСКАЮТСЯ даже в relaxed_mode
+        
+        strict_issues = []
+        
+        # 1. Проверка на заглушки в описании
+        generic_phrases = [
+            'качественный продукт',
+            'эффективное средство',
+            'якісний продукт',
+            'ефективний засіб'
+        ]
+        
+        for phrase in generic_phrases:
+            # Проверяем RU описание
+            ru_desc_match = re.search(r'<div class="description">(.*?)</div>', ru_html, re.DOTALL)
+            if ru_desc_match:
+                desc_text = ru_desc_match.group(1).strip()
+                # Если описание очень короткое (<150 символов) и содержит заглушку - это плохо
+                if phrase in desc_text.lower() and len(desc_text) < 200:
+                    strict_issues.append(f"RU описание содержит заглушку '{phrase}' при малом объеме текста")
+            
+            # Проверяем UA описание
+            ua_desc_match = re.search(r'<div class="description">(.*?)</div>', ua_html, re.DOTALL)
+            if ua_desc_match:
+                desc_text = ua_desc_match.group(1).strip()
+                if phrase in desc_text.lower() and len(desc_text) < 200:
+                    strict_issues.append(f"UA описание содержит заглушку '{phrase}' при малом объеме текста")
+        
+        # 2. Проверка на некорректные названия (с кавычками/JSON)
+        ru_title = result.get('ru_title', '')
+        ua_title = result.get('ua_title', '')
+        
+        if ru_title.startswith('"') or ru_title.startswith('{'):
+            strict_issues.append("RU название не очищено от JSON символов")
+        if ua_title.startswith('"') or ua_title.startswith('{'):
+            strict_issues.append("UA название не очищено от JSON символов")
+        
+        # 3. Проверка на единственное преимущество "Высокое качество" (заглушка)
+        if ru_benefits == 1 and 'Высокое качество</h4>' in ru_html:
+            strict_issues.append("RU преимущества: только заглушка 'Высокое качество'")
+        if ua_benefits == 1 and ('Висока якість</h4>' in ua_html or 'Высокое качество</h4>' in ua_html):
+            strict_issues.append("UA преимущества: только заглушка 'Висока якість'")
+        
+        # Если есть строгие проблемы - ВСЕГДА отклоняем (даже в relaxed_mode)
+        if strict_issues:
+            logger.error(f"❌ СТРОГАЯ ВАЛИДАЦИЯ: Обнаружены заглушки/недоработки - ОТКЛОНЯЕМ")
+            logger.error(f"   Проблемы: {strict_issues}")
+            return (False, strict_issues + issues)
+        
+        # ============ ГИБКАЯ ВАЛИДАЦИЯ (только для relaxed_mode) ============
+        
+        if relaxed_mode and issues:
+            # В relaxed_mode можем принять товар с некритичными проблемами (меньше FAQ, etc)
+            # НО только если НЕТ заглушек (это мы уже проверили выше)
+            logger.info(f"🔵 СМЯГЧЕННАЯ ВАЛИДАЦИЯ (Round 3): {len(issues)} проблем, но БЕЗ заглушек - ПРИНИМАЕМ")
+            logger.info(f"   Проблемы: {issues[:3]}..." if len(issues) > 3 else f"   Проблемы: {issues}")
+            return (True, issues)
         
         return (len(issues) == 0, issues)
     
@@ -306,8 +401,11 @@ class AsyncProductProcessor:
                 
                 # Выбираем правильный список характеристик в зависимости от локали
                 if locale == 'ru':
-                    selected_specs = ru_specs
+                    # ✅ ВСЕГДА нормализуем украинские буквы в RU характеристиках (Флізелін → Флизелин)
+                    # Это решает проблему валидации языка в генераторе контента
+                    selected_specs = normalize_ru_specs_round3(ru_specs)
                     logger.info(f"✅ Используем RU характеристики: {len(ru_specs)} (переведенные через LLM)")
+                    logger.info(f"🔧 Нормализованы украинские буквы в RU характеристиках (Флізелін → Флизелин)")
                 else:  # ua
                     selected_specs = ua_specs
                     logger.info(f"✅ Используем UA характеристики: {len(ua_specs)} (переведенные через LLM)")
@@ -827,12 +925,13 @@ class AsyncProductProcessor:
             logger.info(f"🛡️ Resilient processing: {product_url}")
             
             # Инициализируем Claude для recovery (максимальная надёжность)
+            # ✅ ПРАВИЛЬНО: Используем Claude Haiku для resilient recovery (экономичный fallback)
             from anthropic import Anthropic
             import os
             claude_client = Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
             self.llm_recovery.llm = claude_client
-            self.llm_recovery.model = "claude-3-haiku-20240307"  # Claude Haiku - быстрый и надёжный
-            logger.info(f"🟣 Resilient recovery использует Claude Haiku для максимальной надёжности")
+            self.llm_recovery.model = "claude-3-haiku-20240307"  # Claude Haiku - быстрый fallback
+            logger.info(f"🟣 Resilient recovery использует Claude Haiku для fallback")
             
             # 1. Получаем URLs для обеих локалей
             ua_url, ru_url = self.resilient_fetcher.get_fallback_urls(product_url)
