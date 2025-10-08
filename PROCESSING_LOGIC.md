@@ -68,3 +68,4 @@ Claude-3-haiku (fallback) - resilient recovery
 
 **Общее время:** ~10-15 минут на 30 товаров
 
+

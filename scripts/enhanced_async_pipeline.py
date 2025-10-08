@@ -29,8 +29,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ЭКСПЕРИМЕНТАЛЬНАЯ конфигурация для максимальной производительности
-CONCURRENT_PRODUCTS = 8   # Агрессивный параллелизм
-LLM_CONCURRENCY = 16      # Максимальное количество LLM запросов
+CONCURRENT_PRODUCTS = 10   # Агрессивный параллелизм
+LLM_CONCURRENCY = 20      # Максимальное количество LLM запросов
 TIMEOUT = 45             # Увеличено для качественной генерации
 MAX_RETRIES = 2          # Количество попыток при ошибках
 
