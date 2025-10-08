@@ -506,19 +506,18 @@ async def main():
         if llm_client and hasattr(llm_client, 'print_stats'):
             # Выводим детальную статистику
             llm_client.print_stats()
-        else:
-            logger.warning("⚠️ SmartLLMClient недоступен для статистики")
             
             # Сохраняем в лог-файл
-            stats = llm_client.get_stats()
-            
-            import json
-            with open('llm_usage_stats.json', 'w', encoding='utf-8') as f:
-                json.dump(stats, f, indent=2, ensure_ascii=False)
-            
-            logger.info("📁 Статистика Smart Routing сохранена в llm_usage_stats.json")
+            if hasattr(llm_client, 'get_stats'):
+                stats = llm_client.get_stats()
+                
+                import json
+                with open('llm_usage_stats.json', 'w', encoding='utf-8') as f:
+                    json.dump(stats, f, indent=2, ensure_ascii=False)
+                
+                logger.info("📁 Статистика Smart Routing сохранена в llm_usage_stats.json")
         else:
-            logger.warning("⚠️ SmartLLMClient не найден для статистики")
+            logger.warning("⚠️ SmartLLMClient недоступен для статистики")
             
     except Exception as e:
         logger.warning(f"⚠️ Не удалось вывести статистику Smart Routing: {e}")
