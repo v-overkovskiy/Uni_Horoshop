@@ -21,6 +21,11 @@ def _fix_scheme(u: str) -> str:
     u = re.sub(r'ht+p+s*://', 'https://', u)    # htp://, htps:// → https://
     u = re.sub(r'ht+p://', 'http://', u)        # htp:// → http://
     
+    # Исправляем опечатки в домене
+    u = re.sub(r'prorazkko\.com', 'prorazko.com', u)  # prorazkko.com → prorazko.com
+    u = re.sub(r'prorazko\.co\.', 'prorazko.com', u)  # prorazko.co. → prorazko.com
+    u = re.sub(r'prorazko\.comm', 'prorazko.com', u)  # prorazko.comm → prorazko.com
+    
     # Принудительно https для prorazko.com
     if u.startswith("http://") and "prorazko.com" in u:
         u = "https://" + u[len("http://"):]

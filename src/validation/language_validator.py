@@ -126,10 +126,17 @@ class LanguageValidator:
         elif ru_words > ua_words:
             return 'ru'
         
-        # Fallback: используем langdetect
+        # Fallback: используем langdetect с исправлением для болгарского
         try:
             from langdetect import detect
             detected = detect(text)
+            
+            # ИСПРАВЛЕНИЕ: Если langdetect определил как болгарский (bg), 
+            # но в тексте есть украинские буквы - скорее всего это украинский
+            if detected == 'bg' and has_ukrainian_letters:
+                logger.warning(f"🔧 Исправление: langdetect определил как 'bg', но найдены украинские буквы - считаем 'ua'")
+                return 'ua'
+            
             return 'ua' if detected == 'uk' else detected
         except:
             return 'unknown'

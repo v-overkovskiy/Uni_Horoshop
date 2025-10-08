@@ -367,35 +367,31 @@ class RealFactsExtractor:
         return "косметическое средство"
     
     def _extract_image(self, soup: BeautifulSoup) -> str:
-        """Извлекает URL изображения товара"""
-        # Ищем изображения товара в разных местах
-        img_selectors = [
-            '.product-photo img',
-            '.product-image img', 
-            '.main-image img',
-            '.product-gallery img',
-            'img[alt*="товар"]',
-            'img[alt*="product"]',
-            'img[src*="product"]',
-            'img[src*="товар"]'
-        ]
+        """Извлекает URL изображения товара - СИНХРОНИЗИРОВАНО с ProductImageExtractor"""
+        # Используем тот же подход что и в ProductImageExtractor
+        from src.processing.product_image_extractor import ProductImageExtractor
         
-        for selector in img_selectors:
-            img = soup.select_one(selector)
-            if img and img.get('src'):
-                src = img.get('src')
-                # Обрабатываем относительные URL
-                if src.startswith('/'):
-                    src = f"https://prorazko.com{src}"
-                elif not src.startswith('http'):
-                    src = f"https://prorazko.com/{src}"
-                
-                # Проверяем, что это изображение товара
-                if any(ext in src.lower() for ext in ['.jpg', '.jpeg', '.png', '.webp']):
-                    return src
+        image_extractor = ProductImageExtractor()
         
-        # Fallback: генерируем URL на основе типа товара
-        return self._generate_fallback_image_url(soup)
+        # Конвертируем soup обратно в HTML для ProductImageExtractor
+        html_content = str(soup)
+        
+        # Используем тот же метод поиска что и в ProductImageExtractor
+        image_data = image_extractor.get_product_image_data(
+            html_content=html_content,
+            product_url="",  # URL не критичен для извлечения
+            product_title="",  # Title не критичен для извлечения  
+            locale="ua"  # Локаль не критична для извлечения
+        )
+        
+        image_url = image_data.get('url')
+        
+        if image_url:
+            logger.info(f"✅ RealFactsExtractor: Синхронизировано с ProductImageExtractor: {image_url}")
+            return image_url
+        else:
+            logger.warning(f"⚠️ RealFactsExtractor: Изображение не найдено в HTML контенте")
+            return None
     
     def _generate_fallback_image_url(self, soup: BeautifulSoup) -> str:
         """Генерирует fallback URL изображения"""

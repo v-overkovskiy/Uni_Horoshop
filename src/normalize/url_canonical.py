@@ -18,8 +18,11 @@ class URLCanonicalizer:
     def to_canonical_pair(self, ua_url: str) -> Tuple[str, Dict[str, str]]:
         """Преобразование UA URL в каноническую пару (slug, {ua, ru})"""
         try:
-            # Исправляем опечатки в схеме
+            # Исправляем опечатки в схеме и домене
             fixed_url = re.sub(r'ht+tps?://', 'https://', ua_url)
+            fixed_url = re.sub(r'prorazkko\.com', 'prorazko.com', fixed_url)  # prorazkko.com → prorazko.com
+            fixed_url = re.sub(r'prorazko\.co\.', 'prorazko.com', fixed_url)  # prorazko.co. → prorazko.com
+            fixed_url = re.sub(r'prorazko\.comm', 'prorazko.com', fixed_url)  # prorazko.comm → prorazko.com
             
             # Парсим URL
             parsed = urlparse(fixed_url)
