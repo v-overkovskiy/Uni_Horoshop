@@ -1,5 +1,5 @@
 """
-Генератор преимуществ товаров по стандартам ProRazko
+Генератор преимуществ товаров
 """
 import logging
 from typing import Dict, Any, List
@@ -8,7 +8,7 @@ from src.llm.smart_llm_client import SmartLLMClient
 logger = logging.getLogger(__name__)
 
 class AdvantagesGenerator:
-    """Генерирует преимущества товаров по стандартам ProRazko"""
+    """Генерирует преимущества товаров"""
     
     def __init__(self):
         self.llm = SmartLLMClient()

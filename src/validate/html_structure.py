@@ -241,24 +241,22 @@ class HTMLStructureValidator:
         return errors
     
     def _validate_note_buy(self, doc: BeautifulSoup) -> List[str]:
-        """Проверка note-buy на наличие ProRazko"""
+        """Проверка note-buy на корректность структуры"""
         errors = []
         
         note_buy = doc.find('div', class_='note-buy')
         if note_buy:
             text = note_buy.get_text()
             
-            # Проверяем наличие ProRazko в зависимости от локали
+            # Проверяем наличие ключевых фраз в зависимости от локали
             if self.locale == 'ru':
-                # Проверяем разные варианты написания
-                if ('интернет-магазине ProRazko' not in text and 
-                    'интернет‑магазине ProRazko' not in text):
-                    errors.append("В note-buy отсутствует 'ProRazko' после 'интернет-магазине'")
+                # Проверяем корректность фразы
+                if 'интернет-магазине' not in text and 'интернет‑магазине' not in text:
+                    errors.append("В note-buy отсутствует фраза 'интернет-магазине'")
             else:  # ua
-                # Проверяем разные варианты написания
-                if ('інтернет-магазині ProRazko' not in text and 
-                    'інтернет‑магазині ProRazko' not in text):
-                    errors.append("В note-buy отсутствует 'ProRazko' после 'інтернет-магазині'")
+                # Проверяем корректность фразы
+                if 'інтернет-магазині' not in text and 'інтернет‑магазині' not in text:
+                    errors.append("В note-buy отсутствует фраза 'інтернет-магазині'")
         else:
             errors.append("Отсутствует note-buy")
         

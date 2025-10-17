@@ -1,28 +1,35 @@
 """
-Каноническая нормализация URL для RU/UA пар
+Каноническая нормализация URL для RU/UA пар - УНИВЕРСАЛЬНАЯ ВЕРСИЯ
 """
 import re
 import logging
 from urllib.parse import urlparse, urlunparse, quote, unquote
 from typing import Tuple, Dict
+from src.utils.domain_detector import UniversalDomainDetector
 
 logger = logging.getLogger(__name__)
 
 class URLCanonicalizer:
-    """Каноническая нормализация URL"""
+    """Каноническая нормализация URL - УНИВЕРСАЛЬНАЯ"""
     
-    def __init__(self, base_domain: str = "prorazko.com"):
+    def __init__(self, base_domain: str = None):
+        """
+        Args:
+            base_domain: ОПЦИОНАЛЬНО - если не указан, извлекается из URL автоматически
+        """
         self.base_domain = base_domain
         self.scheme = "https"
     
     def to_canonical_pair(self, ua_url: str) -> Tuple[str, Dict[str, str]]:
-        """Преобразование UA URL в каноническую пару (slug, {ua, ru})"""
+        """Преобразование UA URL в каноническую пару (slug, {ua, ru}) - УНИВЕРСАЛЬНО"""
         try:
-            # Исправляем опечатки в схеме и домене
-            fixed_url = re.sub(r'ht+tps?://', 'https://', ua_url)
-            fixed_url = re.sub(r'prorazkko\.com', 'prorazko.com', fixed_url)  # prorazkko.com → prorazko.com
-            fixed_url = re.sub(r'prorazko\.co\.', 'prorazko.com', fixed_url)  # prorazko.co. → prorazko.com
-            fixed_url = re.sub(r'prorazko\.comm', 'prorazko.com', fixed_url)  # prorazko.comm → prorazko.com
+            # Нормализуем URL универсально
+            fixed_url = UniversalDomainDetector.normalize_url(ua_url)
+            
+            # Извлекаем домен из URL если не был задан в конструкторе
+            if not self.base_domain:
+                _, host, _ = UniversalDomainDetector.extract_domain(fixed_url)
+                self.base_domain = host
             
             # Парсим URL
             parsed = urlparse(fixed_url)

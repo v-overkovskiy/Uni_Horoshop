@@ -1,5 +1,5 @@
 """
-Генератор описаний товаров по стандартам ProRazko с жёстким включением состава набора
+Генератор описаний товаров с жёстким включением состава набора
 """
 import re
 import logging
@@ -16,14 +16,14 @@ from src.processing.unified_parser import UnifiedParser
 logger = logging.getLogger(__name__)
 
 class DescriptionGenerator:
-    """Генерирует описания товаров по точным стандартам ProRazko"""
+    """Генерирует описания товаров"""
     
     def __init__(self):
         self.seo_optimizer = SEOBundleOptimizer()
         self.html_sanitizer = HTMLSanitizer()
         self.unified_parser = UnifiedParser()
         self.description_prompt = """
-Ты — эксперт по написанию коммерческих описаний для товаров ProRazko.
+Ты — эксперт по написанию коммерческих описаний для товаров интернет-магазина.
 
 ЗАДАЧА: Создать описание товара ровно из 6-8 предложений, разбитых на 2 абзаца.
 
@@ -52,7 +52,7 @@ class DescriptionGenerator:
 """
     
     def generate_description(self, product_facts: Dict[str, Any], locale: str, bundle_components: List[str] = None) -> str:
-        """Генерирует описание товара по стандартам ProRazko с жёстким включением состава набора"""
+        """Генерирует описание товара с жёстким включением состава набора"""
         try:
             # Подготавливаем данные для промпта
             prompt_data = {
@@ -87,7 +87,7 @@ class DescriptionGenerator:
             raise ValueError(f"❌ ЗАПРЕЩЕНО: Не удалось сгенерировать описание для {product_facts.get('title', 'товар')}: {e}")
     
     def _create_structured_description(self, product_facts: Dict[str, Any], locale: str) -> str:
-        """Создает структурированное описание по стандартам ProRazko"""
+        """Создает структурированное описание"""
         title = product_facts.get('title', '')
         product_type = product_facts.get('product_type', '')
         volume = product_facts.get('volume', '')

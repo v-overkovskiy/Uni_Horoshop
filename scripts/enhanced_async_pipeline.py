@@ -359,33 +359,13 @@ class EnhancedAsyncPipeline:
             for error in self.errors:
                 logger.info(f"  - {error['url']}: {error['error']}")
         
-        # Статистика FAQ - ИСПРАВЛЕННАЯ логика подсчета
-        total_faq_ru = 0
-        total_faq_ua = 0
-        total_jsonld = 0
-        
-        for r in self.results:
-            if r.get('status') == 'success':
-                # Подсчитываем FAQ из HTML (правильный способ)
-                ru_html = r.get('ru_html', '')
-                ua_html = r.get('ua_html', '')
-                
-                # Считаем FAQ блоки в HTML
-                ru_faq_count = ru_html.count('<div class="faq-item">')
-                ua_faq_count = ua_html.count('<div class="faq-item">')
-                
-                total_faq_ru += ru_faq_count
-                total_faq_ua += ua_faq_count
-                
-                # Считаем JSON-LD блоки
-                if '<!-- FAQPage JSON-LD -->' in ru_html:
-                    total_jsonld += 1
-        
+        # Статистика FAQ
+        total_faq_ru = sum(len(r.get('ru_content', {}).get('faq', [])) for r in self.results)
+        total_faq_ua = sum(len(r.get('ua_content', {}).get('faq', [])) for r in self.results)
         logger.info(f"\n📝 FAQ СТАТИСТИКА:")
         logger.info(f"  RU FAQ: {total_faq_ru} вопросов")
         logger.info(f"  UA FAQ: {total_faq_ua} вопросов")
         logger.info(f"  Всего FAQ: {total_faq_ru + total_faq_ua} вопросов")
-        logger.info(f"  JSON-LD: {total_jsonld} блоков")
         
         # Статистика JSON-LD
         json_ld_count = sum(1 for r in self.results if r.get('ru_json_ld') or r.get('ua_json_ld'))
@@ -491,33 +471,22 @@ async def main():
     # ✅ НОВОЕ: Вывод статистики Smart Routing
     try:
         # Получаем экземпляр SmartLLMClient из любого генератора
-        llm_client = None
-        
-        # Пробуем разные способы получения SmartLLMClient
         if hasattr(pipeline.processor, 'content_generator') and hasattr(pipeline.processor.content_generator, 'llm'):
             llm_client = pipeline.processor.content_generator.llm
-        elif hasattr(pipeline.processor, 'unified_generator') and hasattr(pipeline.processor.unified_generator, 'llm'):
-            llm_client = pipeline.processor.unified_generator.llm
-        else:
-            # Создаем новый экземпляр для статистики
-            from src.llm.smart_llm_client import SmartLLMClient
-            llm_client = SmartLLMClient()
-        
-        if llm_client and hasattr(llm_client, 'print_stats'):
+            
             # Выводим детальную статистику
             llm_client.print_stats()
             
             # Сохраняем в лог-файл
-            if hasattr(llm_client, 'get_stats'):
-                stats = llm_client.get_stats()
-                
-                import json
-                with open('llm_usage_stats.json', 'w', encoding='utf-8') as f:
-                    json.dump(stats, f, indent=2, ensure_ascii=False)
-                
-                logger.info("📁 Статистика Smart Routing сохранена в llm_usage_stats.json")
+            stats = llm_client.get_stats()
+            
+            import json
+            with open('llm_usage_stats.json', 'w', encoding='utf-8') as f:
+                json.dump(stats, f, indent=2, ensure_ascii=False)
+            
+            logger.info("📁 Статистика Smart Routing сохранена в llm_usage_stats.json")
         else:
-            logger.warning("⚠️ SmartLLMClient недоступен для статистики")
+            logger.warning("⚠️ SmartLLMClient не найден для статистики")
             
     except Exception as e:
         logger.warning(f"⚠️ Не удалось вывести статистику Smart Routing: {e}")

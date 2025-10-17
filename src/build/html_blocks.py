@@ -36,9 +36,9 @@ class HTMLBuilder:
                 'specs_title': 'Характеристики',
                 'advantages_title': 'Преимущества',
                 'faq_title': 'FAQ',
-                'note_buy_prefix': 'В нашем интернет‑магазине ProRazko можно',
+                'note_buy_prefix': 'В нашем интернет‑магазине можно',
                 'note_buy_suffix': 'онлайн, с быстрой доставкой по Украине и гарантией качества.',
-                'alt_suffix': '— купить в интернет-магазине ProRazko'
+                'alt_suffix': '— купить с доставкой по Украине'
             }
         else:  # ua
             self.texts = {
@@ -46,9 +46,9 @@ class HTMLBuilder:
                 'specs_title': 'Характеристики',
                 'advantages_title': 'Переваги',
                 'faq_title': 'FAQ',
-                'note_buy_prefix': 'У нашому інтернет‑магазині ProRazko можна',
+                'note_buy_prefix': 'У нашому інтернет‑магазині можна',
                 'note_buy_suffix': 'онлайн зі швидкою доставкою по Україні та гарантією якості.',
-                'alt_suffix': '— купити в інтернет-магазині ProRazko'
+                'alt_suffix': '— купити з доставкою по Україні'
             }
     
     def build_html(self, data: Dict[str, Any], hero_image_url: Optional[str] = None) -> str:
@@ -101,17 +101,17 @@ class HTMLBuilder:
             # Используем fallback преимущества
             advantages_clean = self._get_fallback_advantages()
         
-        # Строим HTML в новом порядке: h2 → описание → note-buy → характеристики → преимущества → FAQ → hero
+        # Строим HTML в новом порядке: h2 → фото → описание → note-buy → характеристики → преимущества → FAQ
         h1_title = data.get('h1', data.get('title', ''))
         html_parts = [
             '<div class="ds-desc">',
             self._build_title(h1_title),  # Всегда h2, так как H1 уже есть в теме
+            self._build_hero_image(hero_image_url, h1_title),  # Фото сразу под заголовком
             self._build_description(description_paragraphs),
             self._build_note_buy(h1_title),
             self._build_specs(specs_display),
             self._build_advantages(advantages_clean),
             self._build_faq(data.get('faq', [])),
-            self._build_hero_image(hero_image_url, h1_title),  # Hero в конце
             '</div>'
         ]
         
@@ -459,7 +459,7 @@ class HTMLBuilder:
             if not strong_content.startswith(f'<strong>{kupit_word}'):
                 errors.append(f"<strong> должен начинаться с '{kupit_word}'")
         
-        # Проверяем наличие "ProRazko" после "интернет-магазине/інтернет-магазині"
+        # Проверяем корректность фразы "интернет-магазине/інтернет-магазині"
         internet_words = ['интернет-магазине', 'інтернет-магазині', 'інтернет‑магазині', 'интернет‑магазине']
         internet_pos = -1
         found_word = ''
@@ -469,11 +469,6 @@ class HTMLBuilder:
                 internet_pos = pos
                 found_word = word
                 break
-        
-        if internet_pos != -1:
-            after_internet = content[internet_pos + len(found_word):]
-            if 'ProRazko' not in after_internet:
-                errors.append(f"После '{found_word}' отсутствует 'ProRazko'")
         
         # Проверяем отсутствие дублирования леммы (например, "пудра Пудру")
         words = content.split()
@@ -488,13 +483,6 @@ class HTMLBuilder:
     
     def _fix_note_buy_validation_errors(self, content: str, locale: str) -> str:
         """Исправляет ошибки валидации note_buy"""
-        # Исправляем отсутствие "ProRazko"
-        internet_words = ['интернет-магазине', 'інтернет-магазині', 'інтернет‑магазині', 'интернет‑магазине']
-        for internet_word in internet_words:
-            if internet_word in content and 'ProRazko' not in content:
-                content = content.replace(internet_word, f'{internet_word} ProRazko')
-                break
-        
         # Исправляем дублирование леммы
         words = content.split()
         fixed_words = []

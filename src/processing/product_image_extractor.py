@@ -6,6 +6,7 @@ import re
 import requests
 from typing import Dict, Any, Optional, List
 from bs4 import BeautifulSoup
+from src.utils.domain_detector import UniversalDomainDetector
 
 logger = logging.getLogger(__name__)
 
@@ -402,43 +403,34 @@ class ProductImageExtractor:
         return None
     
     def generate_product_image_url(self, product_url: str, product_title: str) -> str:
-        """Генерирует URL изображения на основе характеристик товара"""
+        """
+        Генерирует URL изображения на основе характеристик товара
+        УНИВЕРСАЛЬНО - не использует hardcoded домены
+        """
         
         logger.info(f"🔍 Генерируем изображение для: {product_url}")
         
-        # Определить тип товара
-        for product_type, variations in self.product_image_map.items():
-            if product_type in product_url:
-                # Найти конкретный вариант
-                for variant_key, image_file in variations.items():
-                    if variant_key == 'default':
-                        continue
-                    if variant_key in product_url:
-                        image_url = f"https://prorazko.com/content/images/{image_file}"
-                        logger.info(f"✅ Найден специфичный вариант: {variant_key} -> {image_url}")
-                        return image_url
-                
-                # Использовать default вариант
-                if 'default' in variations:
-                    image_url = f"https://prorazko.com/content/images/{variations['default']}"
-                    logger.info(f"✅ Используем default вариант: {image_url}")
-                    return image_url
+        # УНИВЕРСАЛЬНЫЙ подход - НЕ используем hardcoded карты изображений
+        # Изображения должны извлекаться из HTML страницы самого магазина
+        logger.warning(f"⚠️ Карта изображений не поддерживается в универсальном режиме")
+        logger.warning(f"⚠️ Изображения должны извлекаться из HTML страницы магазина")
         
-        # Fallback изображение
-        fallback_url = "https://prorazko.com/content/images/epilax-product-default.webp"
-        logger.warning(f"⚠️ Используем fallback изображение: {fallback_url}")
-        return fallback_url
+        # НЕ возвращаем hardcoded fallback
+        return None
     
     def create_product_image_alt(self, product_title: str, locale: str) -> str:
         """Создает правильный ALT-тег для изображения товара"""
         
         if locale == 'ua':
-            return f'{product_title} — купити з доставкою по Україні в магазині ProRazko'
+            return f'{product_title} — купити з доставкою по Україні'
         else:  # ru
-            return f'{product_title} — купить с доставкой по Украине в магазине ProRazko'
+            return f'{product_title} — купить с доставкой по Украине'
     
     def get_product_image_data(self, html_content: str, product_url: str, product_title: str, locale: str) -> Dict[str, str]:
         """ОПТИМИЗИРОВАННЫЙ метод с приоритетным поиском качественных изображений"""
+        
+        # Сохраняем product_url для использования в _ensure_absolute_url
+        self.current_product_url = product_url
         
         logger.info(f"\n{'='*80}")
         logger.info(f"🎯 ПОИСК ИЗОБРАЖЕНИЯ ДЛЯ: {product_title}")
@@ -578,9 +570,13 @@ class ProductImageExtractor:
         return any(pattern in src_lower for pattern in thumbnail_patterns)
     
     def _ensure_absolute_url(self, url: str) -> str:
-        """Преобразует относительный URL в абсолютный"""
-        if url.startswith('/'):
-            return f"https://prorazko.com{url}"
-        elif not url.startswith('http'):
-            return f"https://prorazko.com/{url.lstrip('/')}"
-        return url
+        """Преобразует относительный URL в абсолютный, используя домен из product_url"""
+        # Если URL уже абсолютный - возвращаем как есть
+        if url.startswith('http://') or url.startswith('https://'):
+            return url
+        
+        # Используем текущий product_url или fallback
+        base_url = getattr(self, 'current_product_url', 'https://example.com')
+        
+        # Используем универсальный детектор домена
+        return UniversalDomainDetector.make_absolute_url(url, base_url)

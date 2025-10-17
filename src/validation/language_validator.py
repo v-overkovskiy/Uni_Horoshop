@@ -74,7 +74,7 @@ class LanguageValidator:
         elif expected_locale == 'ua':
             # Считаем русские служебные слова
             ru_word_count = sum(1 for word in words if word in self.RUSSIAN_WORDS)
-            if ru_word_count > 10:  # Порог: более 10 русских слов (мягче для смешанных текстов)
+            if ru_word_count > 3:  # Порог: более 3 русских слов
                 return False, f"В UA тексте найдено {ru_word_count} русских служебных слов"
         
         # МЕТОД 3: Использование langdetect (опционально)
@@ -126,17 +126,10 @@ class LanguageValidator:
         elif ru_words > ua_words:
             return 'ru'
         
-        # Fallback: используем langdetect с исправлением для болгарского
+        # Fallback: используем langdetect
         try:
             from langdetect import detect
             detected = detect(text)
-            
-            # ИСПРАВЛЕНИЕ: Если langdetect определил как болгарский (bg), 
-            # но в тексте есть украинские буквы - скорее всего это украинский
-            if detected == 'bg' and has_ukrainian_letters:
-                logger.warning(f"🔧 Исправление: langdetect определил как 'bg', но найдены украинские буквы - считаем 'ua'")
-                return 'ua'
-            
             return 'ua' if detected == 'uk' else detected
         except:
             return 'unknown'

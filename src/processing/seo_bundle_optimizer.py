@@ -122,8 +122,8 @@ class SEOBundleOptimizer:
         title = product_facts.get('title', '')
         
         if locale == 'ua':
-            meta_template = f"{title} - повний набір для депіляції з {len(bundle_components)} компонентами. Купити з доставкою по Україні в ProRazko."
+            meta_template = f"{title} - повний набір для депіляції з {len(bundle_components)} компонентами. Купити з доставкою по Україні."
         else:
-            meta_template = f"{title} - полный набор для депиляции с {len(bundle_components)} компонентами. Купить с доставкой по Украине в ProRazko."
+            meta_template = f"{title} - полный набор для депиляции с {len(bundle_components)} компонентами. Купить с доставкой по Украине."
         
         return meta_template

@@ -212,7 +212,7 @@ class RepairEngine:
             content['description'] = self._generate_fixed_description(product_data, locale)
         
         if not content.get('note_buy') or '<strong>купити </strong>' in content['note_buy']:
-            content['note_buy'] = f"<strong>купити товар</strong> в інтернет-магазині ProRazko" if locale == 'ua' else f"<strong>купить товар</strong> в интернет-магазине ProRazko"
+            content['note_buy'] = f"<strong>купити товар</strong> в інтернет-магазині" if locale == 'ua' else f"<strong>купить товар</strong> в интернет-магазине"
         
         return content
     
@@ -239,14 +239,14 @@ class RepairEngine:
         declined_title = decline_title_for_buy(title, locale)
         
         if locale == 'ua':
-            note_buy = f"<strong>купити {declined_title}</strong> в інтернет-магазині ProRazko"
+            note_buy = f"<strong>купити {declined_title}</strong> в інтернет-магазині"
         else:
-            note_buy = f"<strong>купить {declined_title}</strong> в интернет-магазине ProRazko"
+            note_buy = f"<strong>купить {declined_title}</strong> в интернет-магазине"
         
         # Создаем hero изображение
         hero = {
             'url': parsed_data.hero.get('url', '') if parsed_data.hero else '',
-            'alt': f"{title} — купить в интернет-магазине ProRazko" if locale == 'ru' else f"{title} — купити в інтернет-магазині ProRazko"
+            'alt': f"{title} — купить с доставкой по Украине" if locale == 'ru' else f"{title} — купити з доставкою по Україні"
         }
         
         return {

@@ -12,7 +12,7 @@ from src.schema.jsonld_faq import FAQJSONLD
 logger = logging.getLogger(__name__)
 
 class ProductFragmentRenderer:
-    """Рендерит HTML фрагменты товаров по стандартам ProRazko"""
+    """Рендерит HTML фрагменты товаров"""
     
     def __init__(self):
         self.templates = {
@@ -43,16 +43,19 @@ class ProductFragmentRenderer:
                 with tag('h2', klass='prod-title'):
                     text(title)
                 
-                # 2. ОПИСАНИЕ (6-8 предложений в 2 абзацах)
+                # 2. ИЗОБРАЖЕНИЕ товара (сразу после заголовка)
+                self._render_product_image(doc, tag, line, blocks, locale)
+                
+                # 3. ОПИСАНИЕ (6-8 предложений в 2 абзацах)
                 description_html = self._get_full_description(blocks, locale)
                 doc.asis(description_html)
                 
-                # 3. КОММЕРЧЕСКАЯ ФРАЗА с жирным выделением
+                # 4. КОММЕРЧЕСКАЯ ФРАЗА с жирным выделением
                 note_buy = self._get_full_note_buy(blocks, locale)
                 with tag('p', klass='note-buy'):
                     doc.asis(note_buy)
                 
-                # 4. ХАРАКТЕРИСТИКИ (5-8 пунктов)
+                # 5. ХАРАКТЕРИСТИКИ (5-8 пунктов)
                 specs = blocks.get('specs', [])
                 logger.info(f"🔍 FragmentRenderer {locale}: specs тип: {type(specs)}")
                 logger.info(f"🔍 FragmentRenderer {locale}: specs длина: {len(specs) if specs else 0}")
@@ -91,7 +94,7 @@ class ProductFragmentRenderer:
                         
                         logger.info(f"🔧 FragmentRenderer {locale}: Закрываем </ul>")
                 
-                # 5. ПРЕИМУЩЕСТВА (3-6 карточек)
+                # 6. ПРЕИМУЩЕСТВА (3-6 карточек)
                 advantages = blocks.get('advantages', [])
                 if advantages:
                     with tag('h2'):
@@ -107,7 +110,7 @@ class ProductFragmentRenderer:
                                     with tag('h4'):
                                         text(advantage.get('title', advantage.get('name', '')))
                 
-                # 6. FAQ (строго 6 вопросов)
+                # 7. FAQ (строго 6 вопросов)
                 faq_data = blocks.get('faq', [])
                 if faq_data:
                     with tag('h2'):
@@ -131,9 +134,6 @@ class ProductFragmentRenderer:
                                 with tag('div', klass='faq-answer'):
                                     text(answer)
                 
-                # 7. ИЗОБРАЖЕНИЕ товара (в конце)
-                self._render_product_image(doc, tag, line, blocks, locale)
-
                 # 8. JSON-LD структурированные данные
                 self._render_json_ld(doc, blocks, locale)
             
@@ -226,60 +226,22 @@ class ProductFragmentRenderer:
             logger.error(f"❌ Ошибка построения JSON-LD: {e}")
     
     def _generate_image_url_from_product_url(self, product_url: str) -> str:
-        """Генерирует URL изображения на основе URL товара"""
-        # Детальная карта товаров к изображениям
-        product_image_map = {
-            # Гели для душа
-            'hel-dlia-dushu-epilax-kokos-250-ml': 'https://prorazko.com/content/images/gel-coconut-250ml.webp',
-            'hel-dlia-dushu-epilax-vetiver-250-ml': 'https://prorazko.com/content/images/gel-vetiver-250ml.webp',
-            'hel-dlia-dushu-epilax-aqua-blue-250-ml': 'https://prorazko.com/content/images/gel-aqua-blue-250ml.webp',
-            'hel-dlia-dushu-epilax-bilyi-chai-250-ml': 'https://prorazko.com/content/images/gel-white-tea-250ml.webp',
-            'hel-dlia-dushu-epilax-morska-sil-250-ml': 'https://prorazko.com/content/images/gel-sea-salt-250ml.webp',
-            
-            # Пудры
-            'pudra-enzymna-epilax-50-hram': 'https://prorazko.com/content/images/powder-enzymatic-50g.webp',
-            
-            # Флюиды
-            'fliuid-vid-vrosloho-volossia-epilax-5-ml-tester': 'https://prorazko.com/content/images/fluid-ingrown-hair-5ml.webp',
-            
-            # Пенки
-            'pinka-dlia-intymnoi-hihiieny-epilax-150-ml': 'https://prorazko.com/content/images/foam-intimate-150ml.webp',
-            'pinka-dlia-ochyshchennia-sukhoi-ta-normalnoi-shkiry-epilax-150-ml': 'https://prorazko.com/content/images/foam-dry-skin-150ml.webp',
-            'pinka-dlia-ochyshchennia-zhyrnoi-ta-kombinovanoi-shchkiry-epilax-150-ml': 'https://prorazko.com/content/images/foam-oily-skin-150ml.webp',
-            
-            # Гели для депиляции
-            'hel-do-depiliatsii-epilax-z-okholodzhuiuchym-efektom-250-ml': 'https://prorazko.com/content/images/gel-cooling-effect-250ml.webp'
-        }
-        
-        # Извлечь последнюю часть URL (slug)
-        url_slug = product_url.replace('https://prorazko.com/', '').rstrip('/')
-        
-        # Найти точное соответствие
-        if url_slug in product_image_map:
-            return product_image_map[url_slug]
-        
-        # Fallback по типу товара
-        if 'hel-dlia-dushu' in url_slug:
-            return "https://prorazko.com/content/images/gel-for-shower-250ml.webp"
-        elif 'pudra' in url_slug:
-            return "https://prorazko.com/content/images/powder-50g.webp"
-        elif 'fliuid' in url_slug:
-            return "https://prorazko.com/content/images/fluid-5ml.webp"
-        elif 'pinka' in url_slug:
-            return "https://prorazko.com/content/images/foam-150ml.webp"
-        elif 'hel-do-depiliatsii' in url_slug:
-            return "https://prorazko.com/content/images/gel-pre-depilation-250ml.webp"
-        
-        # Изображение не найдено - возвращаем None вместо заглушки
+        """
+        Генерирует URL изображения на основе URL товара - УНИВЕРСАЛЬНО
+        НЕ использует hardcoded карты изображений
+        """
+        # УНИВЕРСАЛЬНАЯ СИСТЕМА - изображения должны извлекаться из HTML
+        # НЕ используем hardcoded карты для конкретных магазинов
+        logger.warning(f"⚠️ Универсальная система: изображения извлекаются только из HTML страницы")
         logger.warning(f"⚠️ Изображение не найдено для URL: {product_url}")
         return None
     
     def _generate_alt_text(self, title: str, locale: str) -> str:
-        """Генерирует ALT-текст для изображения товара по формуле ProRazko"""
+        """Генерирует ALT-текст для изображения товара"""
         if locale == 'ua':
-            return f'{title} — купити з доставкою по Україні в магазині ProRazko'
+            return f'{title} — купити з доставкою по Україні'
         else:
-            return f'{title} — купить с доставкой по Украине в магазине ProRazko'
+            return f'{title} — купить с доставкой по Украине'
     
     def _validate_blocks(self, blocks: Dict[str, Any], locale: str):
         """Валидирует блоки на полноту данных"""

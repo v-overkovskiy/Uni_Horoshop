@@ -178,9 +178,9 @@ class HoroshopProRazkoV1:
         else:
             # Fallback к простому шаблону
             if self.locale == 'ru':
-                return f"В нашем интернет-магазине ProRazko можно <strong>купить {h1.lower()}</strong> с быстрой доставкой по Украине и гарантией качества."
+                return f"В нашем интернет-магазине можно <strong>купить {h1.lower()}</strong> с быстрой доставкой по Украине и гарантией качества."
             else:
-                return f"У нашому інтернет-магазині ProRazko можна <strong>купити {h1.lower()}</strong> з швидкою доставкою по Україні та гарантією якості."
+                return f"У нашому інтернет-магазині можна <strong>купити {h1.lower()}</strong> з швидкою доставкою по Україні та гарантією якості."
 
     def _extract_note_buy(self, doc: BeautifulSoup) -> str:
         """Извлечение note-buy (deprecated - используйте _generate_note_buy)"""

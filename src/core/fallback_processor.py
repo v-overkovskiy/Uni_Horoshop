@@ -181,6 +181,6 @@ class FallbackProcessor:
         else:
             # Fallback к старому шаблону
             if locale == 'ru':
-                return f"В нашем интернет‑магазине ProRazko можно <strong>купить</strong> <strong>{h1.lower()}</strong> с быстрой доставкой по Украине и гарантией качества."
+                return f"В нашем интернет‑магазине можно <strong>купить</strong> <strong>{h1.lower()}</strong> с быстрой доставкой по Украине и гарантией качества."
             else:
-                return f"У нашому інтернет‑магазині ProRazko можна <strong>купити</strong> <strong>{h1.lower()}</strong> з швидкою доставкою по Україні та гарантією якості."
+                return f"У нашому інтернет‑магазині можна <strong>купити</strong> <strong>{h1.lower()}</strong> з швидкою доставкою по Україні та гарантією якості."

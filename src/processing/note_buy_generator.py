@@ -1,5 +1,5 @@
 """
-Генератор коммерческих фраз ProRazko с правильными падежами
+Генератор коммерческих фраз с правильными падежами
 """
 import logging
 import re
@@ -8,7 +8,7 @@ from typing import Dict, Any
 logger = logging.getLogger(__name__)
 
 class NoteBuyGenerator:
-    """Генерирует коммерческие фразы по точной формуле ProRazko"""
+    """Генерирует коммерческие фразы по точной формуле"""
     
     def __init__(self):
         # Паттерны для склонения украинских слов
@@ -30,14 +30,14 @@ class NoteBuyGenerator:
         }
     
     def generate_note_buy(self, product_title: str, locale: str) -> str:
-        """Генерирует коммерческую фразу по точной формуле ProRazko"""
+        """Генерирует коммерческую фразу по точной формуле"""
         try:
             if locale == 'ua':
                 declined_title = self.decline_title_ua(product_title)
-                return f'У нашому інтернет-магазині ProRazko можна <strong>купити {declined_title.lower()}</strong> з швидкою доставкою по Україні.'
+                return f'У нашому інтернет-магазині можна <strong>купити {declined_title.lower()}</strong> з швидкою доставкою по Україні.'
             else:  # ru
                 declined_title = self.decline_title_ru(product_title)
-                return f'В нашем интернет-магазине ProRazko можно <strong>купить {declined_title.lower()}</strong> с быстрой доставкой по Украине и гарантией качества.'
+                return f'В нашем интернет-магазине можно <strong>купить {declined_title.lower()}</strong> с быстрой доставкой по Украине и гарантией качества.'
                 
         except Exception as e:
             logger.error(f"❌ Ошибка генерации note_buy: {e}")
@@ -94,6 +94,6 @@ class NoteBuyGenerator:
     def _create_fallback_note_buy(self, product_title: str, locale: str) -> str:
         """Создает fallback коммерческую фразу"""
         if locale == 'ua':
-            return f'У нашому інтернет-магазині ProRazko можна <strong>купити {product_title.lower()}</strong> з доставкою по Україні.'
+            return f'У нашому інтернет-магазині можна <strong>купити {product_title.lower()}</strong> з доставкою по Україні.'
         else:
-            return f'В нашем интернет-магазине ProRazko можно <strong>купить {product_title.lower()}</strong> с доставкой по Украине.'
+            return f'В нашем интернет-магазине можно <strong>купить {product_title.lower()}</strong> с доставкой по Украине.'

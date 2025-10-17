@@ -838,14 +838,11 @@ class AsyncProductProcessor:
             return f'<div class="ds-desc"><p class="error-message">Ошибка обработки товара</p></div>'
     
     def _get_locale_urls(self, product_url: str) -> tuple[str, str]:
-        """Генерация URL для обеих локалей"""
-        # Простая логика - добавляем /ru/ для русской версии
-        if '/ru/' in product_url:
-            ua_url = product_url.replace('/ru/', '/')
-            ru_url = product_url
-        else:
-            ua_url = product_url
-            ru_url = product_url.replace('prorazko.com/', 'prorazko.com/ru/')
+        """Генерация URL для обеих локалей - УНИВЕРСАЛЬНО"""
+        from src.utils.domain_detector import UniversalDomainDetector
+        
+        # Используем универсальный детектор для генерации пары локалей
+        ua_url, ru_url = UniversalDomainDetector.get_locale_pair(product_url)
         
         return ua_url, ru_url
     

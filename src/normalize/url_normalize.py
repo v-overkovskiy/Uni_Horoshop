@@ -1,34 +1,22 @@
 """
-Нормализация URL для пар RU/UA
+Нормализация URL для пар RU/UA - УНИВЕРСАЛЬНАЯ ВЕРСИЯ
 """
 import re
 import logging
 from urllib.parse import urlparse, urlunparse, quote, unquote
 from typing import Tuple, Dict
+from src.utils.domain_detector import UniversalDomainDetector
 
 logger = logging.getLogger(__name__)
 
-HOST = "prorazko.com"
+# НЕ используем hardcoded HOST - система универсальная
 
 def _fix_scheme(u: str) -> str:
-    """Исправление схемы URL"""
+    """Исправление схемы URL - УНИВЕРСАЛЬНО"""
     original = u
-    u = u.strip()
     
-    # Исправляем опечатки в протоколе
-    u = re.sub(r'ht+t+p+s*://', 'https://', u)  # htttps://, httttps:// → https://
-    u = re.sub(r'ht+t+p://', 'http://', u)      # htttp://, httttp:// → http://
-    u = re.sub(r'ht+p+s*://', 'https://', u)    # htp://, htps:// → https://
-    u = re.sub(r'ht+p://', 'http://', u)        # htp:// → http://
-    
-    # Исправляем опечатки в домене
-    u = re.sub(r'prorazkko\.com', 'prorazko.com', u)  # prorazkko.com → prorazko.com
-    u = re.sub(r'prorazko\.co\.', 'prorazko.com', u)  # prorazko.co. → prorazko.com
-    u = re.sub(r'prorazko\.comm', 'prorazko.com', u)  # prorazko.comm → prorazko.com
-    
-    # Принудительно https для prorazko.com
-    if u.startswith("http://") and "prorazko.com" in u:
-        u = "https://" + u[len("http://"):]
+    # Используем универсальный детектор
+    u = UniversalDomainDetector.normalize_url(u, force_https=True)
     
     # Логируем исправления
     if original != u:

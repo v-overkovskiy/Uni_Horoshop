@@ -12,7 +12,7 @@ class SafeTemplates:
     def __init__(self):
         self.templates = {
             'ru': {
-                'note_buy': "В нашем интернет-магазине ProRazko можно <strong>купить {title}</strong> — быстрая доставка по Украине и гарантия качества.",
+                'note_buy': "В нашем интернет-магазине можно <strong>купить {title}</strong> — быстрая доставка по Украине и гарантия качества.",
                 'description': "{title}. {brand_info}{color_info}{pack_info}",
                 'advantages': [
                     "Подходит для разных зон тела",
@@ -30,7 +30,7 @@ class SafeTemplates:
                 ]
             },
             'ua': {
-                'note_buy': "У нашому інтернет-магазині ProRazko можна <strong>купити {title}</strong> — швидка доставка по Україні та гарантія якості.",
+                'note_buy': "У нашому інтернет-магазині можна <strong>купити {title}</strong> — швидка доставка по Україні та гарантія якості.",
                 'description': "{title}. {brand_info}{color_info}{pack_info}",
                 'advantages': [
                     "Підходить для різних зон тіла",

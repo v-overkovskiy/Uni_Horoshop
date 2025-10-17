@@ -1,5 +1,5 @@
 """
-Генератор характеристик товаров по стандартам ProRazko
+Генератор характеристик товаров
 """
 import logging
 from typing import Dict, Any, List
@@ -7,7 +7,7 @@ from typing import Dict, Any, List
 logger = logging.getLogger(__name__)
 
 class SpecsGenerator:
-    """Генерирует характеристики товаров по стандартам ProRazko"""
+    """Генерирует характеристики товаров"""
     
     def __init__(self):
         self.universal_specs = {

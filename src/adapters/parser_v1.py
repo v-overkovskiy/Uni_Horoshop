@@ -22,13 +22,13 @@ class ParserV1:
             self.texts = {
                 'note_buy_prefix': 'В нашем интернет‑магазине можно',
                 'note_buy_suffix': 'онлайн, с быстрой доставкой по Украине и гарантией качества.',
-                'alt_suffix': '— купить в интернет-магазине ProRazko'
+                'alt_suffix': '— купить с доставкой по Украине'
             }
         else:  # ua
             self.texts = {
                 'note_buy_prefix': 'У нашому інтернет‑магазині можна',
                 'note_buy_suffix': 'онлайн зі швидкою доставкою по Україні та гарантією якості.',
-                'alt_suffix': '— купити в інтернет-магазині ProRazko'
+                'alt_suffix': '— купити з доставкою по Україні'
             }
     
     def parse(self, html: str, url: str) -> ContentModel:

@@ -13,8 +13,8 @@ class EnhancedNoteBuyGenerator:
     def __init__(self):
         # Шаблоны для RU и UA с двумя отдельными <strong> тегами
         self.templates = {
-            'ru': "В нашем интернет-магазине ProRazko можно <strong>купить {np_acc_lowercased_first}</strong> с быстрой доставкой по Украине и гарантией качества.",
-            'ua': "У нашому інтернет-магазині ProRazko можна <strong>купити {np_acc_lowercased_first}</strong> з швидкою доставкою по Україні та гарантією якості."
+            'ru': "В нашем интернет-магазине можно <strong>купить {np_acc_lowercased_first}</strong> с быстрой доставкой по Украине и гарантией качества.",
+            'ua': "У нашому інтернет-магазині можна <strong>купити {np_acc_lowercased_first}</strong> з швидкою доставкою по Україні та гарантією якості."
         }
         
         # Правила склонения для RU (винительный падеж)
@@ -348,9 +348,9 @@ class EnhancedNoteBuyGenerator:
             logger.error(f"❌ Ошибка генерации note_buy: {e}")
             # Fallback note_buy
             if locale == 'ua':
-                return "У нашому інтернет-магазині ProRazko можна <strong>купити товар</strong>"
+                return "У нашому інтернет-магазині можна <strong>купити товар</strong>"
             else:
-                return "В нашем интернет-магазине ProRazko можно <strong>купить товар</strong>"
+                return "В нашем интернет-магазине можно <strong>купить товар</strong>"
     
     def _extract_title_from_facts(self, product_data: Dict[str, Any], locale: str) -> str:
         """Извлекает заголовок из фактов о товаре"""

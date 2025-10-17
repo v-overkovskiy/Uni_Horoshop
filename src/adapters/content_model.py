@@ -10,7 +10,7 @@ class ContentModel:
     # Основные поля
     h1: str
     description: Dict[str, List[str]]  # {"p1": [3 предложения], "p2": [3 предложения]}
-    specs: List[Dict[str, str]]  # [{"name": "Бренд", "value": "ProRazko"}]
+    specs: List[Dict[str, str]]  # [{"name": "Бренд", "value": "BrandName"}]
     advantages: List[str]  # [4-6 преимуществ]
     faq: List[Dict[str, str]]  # [{"q": "вопрос", "a": "ответ"} x 6]
     note_buy: str  # коммерческий текст

@@ -101,17 +101,11 @@ class FallbackFetcher:
         return url
     
     def _normalize_scheme_strict(self, url: str) -> str:
-        """Жёсткая нормализация схемы - исправляет htttps и любые варианты"""
-        import re
+        """Жёсткая нормализация схемы - исправляет htttps и любые варианты - УНИВЕРСАЛЬНО"""
+        from src.utils.domain_detector import UniversalDomainDetector
+        
         original = url
-        url = url.strip()
-        
-        # Исправляем все варианты htttps
-        url = re.sub(r'^h+t+t+tps?://', 'https://', url, flags=re.I)
-        
-        # Принудительно https для prorazko.com
-        if url.startswith("http://") and "prorazko.com" in url:
-            url = "https://" + url[len("http://"):]
+        url = UniversalDomainDetector.normalize_url(url, force_https=True)
         
         if original != url:
             logger.info(f"🔧 URL схема исправлена: '{original}' → '{url}'")
