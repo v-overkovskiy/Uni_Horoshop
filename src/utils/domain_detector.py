@@ -79,11 +79,21 @@ class UniversalDomainDetector:
         # Извлекаем домен из базового URL
         _, _, full_domain = UniversalDomainDetector.extract_domain(base_url)
         
+        # Проверка на пустой домен
+        if not full_domain or full_domain == 'https://':
+            logger.warning(f"⚠️ Не удалось извлечь домен из {base_url}, используем относительный URL как есть")
+            return relative_url
+        
         # Формируем абсолютный URL
         if relative_url.startswith('/'):
-            return f"{full_domain}{relative_url}"
+            result = f"{full_domain}{relative_url}"
         else:
-            return f"{full_domain}/{relative_url.lstrip('/')}"
+            result = f"{full_domain}/{relative_url.lstrip('/')}"
+        
+        # Нормализуем двойные слэши (кроме протокола)
+        result = re.sub(r'(?<!:)//+', '/', result)
+        
+        return result
     
     @staticmethod
     def get_locale_pair(base_url: str, locale_marker: str = '/ru/') -> Tuple[str, str]:

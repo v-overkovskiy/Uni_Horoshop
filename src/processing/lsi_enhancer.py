@@ -84,7 +84,7 @@ class LSIEnhancer:
     ) -> List[str]:
         """Генерирует релевантные LSI-ключи"""
         
-        prompt = self._get_lsi_generation_prompt(locale)
+        system_prompt = self._get_lsi_generation_prompt(locale)
         
         user_message = f"""
 ОСНОВНОЙ КЛЮЧ: {main_keyword}
@@ -94,10 +94,14 @@ class LSIEnhancer:
 Сгенерируй 10-15 релевантных LSI-ключей для SEO-оптимизации.
 """
         
+        # Объединяем system prompt и user message
+        full_prompt = f"{system_prompt}\n\n{user_message}"
+        
         try:
-            response = await self.llm.generate_async(
-                system_prompt=prompt,
-                user_message=user_message,
+            response = await self.llm.generate(
+                prompt=full_prompt,
+                context={'type': 'lsi_generation', 'locale': locale},
+                max_tokens=200,
                 temperature=0.7
             )
             
@@ -184,7 +188,7 @@ LSI-КЛЮЧІ — це пов'язані терміни та фрази, які
     ) -> str:
         """Естественно вплетает LSI-ключи в описание"""
         
-        prompt = self._get_lsi_injection_prompt(locale)
+        system_prompt = self._get_lsi_injection_prompt(locale)
         
         user_message = f"""
 ИСХОДНОЕ ОПИСАНИЕ:
@@ -196,10 +200,14 @@ LSI-КЛЮЧИ ДЛЯ ВПЛЕТЕНИЯ:
 Перепиши описание, естественно интегрируя LSI-ключи.
 """
         
+        # Объединяем system prompt и user message
+        full_prompt = f"{system_prompt}\n\n{user_message}"
+        
         try:
-            enhanced_description = await self.llm.generate_async(
-                system_prompt=prompt,
-                user_message=user_message,
+            enhanced_description = await self.llm.generate(
+                prompt=full_prompt,
+                context={'type': 'lsi_injection', 'locale': locale},
+                max_tokens=1000,
                 temperature=0.5
             )
             
@@ -341,10 +349,14 @@ LSI-КЛЮЧИ ДЛЯ ВПЛЕТЕНИЯ:
 
 Поверни ТІЛЬКИ переписану перевагу."""
         
+        # Объединяем в полный промпт
+        full_prompt = f"Ти — SEO-копірайтер.\n\n{prompt}"
+        
         try:
-            enhanced = await self.llm.generate_async(
-                system_prompt="Ти — SEO-копірайтер.",
-                user_message=prompt,
+            enhanced = await self.llm.generate(
+                prompt=full_prompt,
+                context={'type': 'lsi_advantage', 'locale': locale},
+                max_tokens=200,
                 temperature=0.5
             )
             
