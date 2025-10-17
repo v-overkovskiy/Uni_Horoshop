@@ -24,6 +24,9 @@ class UnifiedContentGenerator:
         self.validator = ContentValidator()
         self.language_validator = LanguageValidator()
         self.llm = SmartLLMClient()
+        # LSI Enhancer инициализируется lazy (при первом использовании)
+        self._lsi_enhancer = None
+        self.use_lsi = True  # Флаг для включения/выключения LSI enhancement
         self.unified_prompt = """
 Ты — эксперт по созданию коммерческого контента для товаров интернет-магазина.
 
@@ -123,6 +126,14 @@ class UnifiedContentGenerator:
   "note_buy": "В нашем интернет-магазине можно <strong>купить воск в картридже для депиляции Simple USE</strong> с быстрой доставкой по Украине и гарантией качества"
 }}
 """
+    
+    @property
+    def lsi_enhancer(self):
+        """Lazy initialization LSI Enhancer"""
+        if self._lsi_enhancer is None:
+            from src.processing.lsi_enhancer import LSIEnhancer
+            self._lsi_enhancer = LSIEnhancer()
+        return self._lsi_enhancer
     
     async def generate_unified_content(self, product_facts: Dict[str, Any], locale: str) -> Dict[str, Any]:
         """Генерирует ВЕСЬ контент за один LLM вызов на основе РЕАЛЬНЫХ данных"""
@@ -256,6 +267,20 @@ class UnifiedContentGenerator:
                     # КРИТИЧНО: Строгая валидация результата
                     if not self.validator.validate_all_content(parsed_content, locale):
                         raise ValueError("❌ ЗАПРЕЩЕНО: Сгенерированный контент не прошел валидацию")
+                
+                # 🔍 LSI Enhancement: Обогащаем контент LSI-ключами
+                if self.use_lsi:
+                    try:
+                        logger.info("🔍 Запускаем LSI Enhancement...")
+                        parsed_content = await self.lsi_enhancer.enhance_with_lsi(
+                            content=parsed_content,
+                            product_facts=product_facts,
+                            locale=locale
+                        )
+                        logger.info("✅ LSI Enhancement завершен")
+                    except Exception as lsi_error:
+                        logger.warning(f"⚠️ LSI Enhancement не удался, продолжаем без него: {lsi_error}")
+                        # Не останавливаем процесс если LSI не сработал
                 
                 logger.info(f"✅ Объединенный контент сгенерирован для {locale}: {len(parsed_content)} блоков")
                 return parsed_content
