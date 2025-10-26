@@ -12,23 +12,21 @@ class RealFactsExtractor:
     """Извлекает РЕАЛЬНЫЕ факты из HTML страниц товаров"""
     
     def __init__(self):
+        # УНИВЕРСАЛЬНЫЕ паттерны для извлечения брендов (любые А-Я символы)
         self.brand_patterns = [
-            r'Epilax',
-            r'ProRazko',
-            r'([А-Яа-яЁё]+)'
+            r'([А-Яа-яЁёA-Za-z\s-]{2,})',  # Любые буквы и дефисы
         ]
         
+        # УНИВЕРСАЛЬНЫЕ паттерны для объемов/весов (любые единицы)
         self.volume_patterns = [
-            r'(\d+)\s*(мл|ml)',
-            r'(\d+)\s*(г|g|грам|hram)',
-            r'(\d+)\s*(л|l)'
+            r'(\d+)\s*(мл|ml|г|g|грам|kg|кг|gram)',
+            r'(\d+)\s*(л|l)',
+            r'(\d+)\s*(шт|units?|pcs)',
         ]
         
+        # УНИВЕРСАЛЬНЫЕ паттерны для типов товаров (общие категории)
         self.product_type_patterns = {
-            'пудра': ['пудра', 'pudra', 'порошок'],
-            'гель': ['гель', 'gel', 'флюид', 'fluid'],
-            'пінка': ['пінка', 'пенка', 'foam'],
-            'крем': ['крем', 'cream', 'мазь']
+            'универсальный': ['товар', 'продукт', 'изделие', 'product', 'item'],
         }
     
     def extract_product_facts(self, html_content: str, url: str = "") -> Dict[str, Any]:
@@ -167,55 +165,88 @@ class RealFactsExtractor:
         return specs
     
     def _extract_facts_from_description(self, soup: BeautifulSoup) -> List[Dict[str, str]]:
-        """Извлекает дополнительные факты из текстового описания товара"""
+        """Извлекает дополнительные факты из текстового описания товара - УНИВЕРСАЛЬНО для любых товаров"""
         description_facts = []
         text_content = soup.get_text()
         
-        # Паттерны для извлечения фактов
+        # УНИВЕРСАЛЬНЫЕ паттерны для извлечения фактов (работают для ЛЮБЫХ товаров)
         patterns = {
             'Вес': [
                 r'вага[\s:]+до\s+(\d+)\s*(кг|г|gram)',
                 r'вес[\s:]+до\s+(\d+)\s*(кг|г|gram)',
                 r'важить[\s:]+(\d+)\s*(кг|г|gram)',
+                r'маса[\s:]+(\d+)\s*(кг|г|gram)',
+                r'weight[\s:]+(\d+)\s*(kg|g|gram)',
             ],
-            'Размер в сложенном виде': [
-                r'в\s+складеному\s+виді[\s:]+(\d+)[×x](\d+)\s*см',
-                r'в\s+складеном\s+виде[\s:]+(\d+)[×x](\d+)\s*см',
-                r'размер[\s:]+в\s+сложенном\s+виде[\s:]+(\d+)[×x](\d+)\s*см',
+            'Размеры': [
+                r'(\d+)[×x](\d+)\s*см',
+                r'(\d+)[×x](\d+)\s*см\s*в\s+(?:складеному|сложенном)\s+виді',
+                r'(\d+)[×x](\d+)\s*мм',
+                r'size[\s:]+(\d+)[×x](\d+)\s*cm',
             ],
-            'Прочность': [
-                r'не\s+можна\s+(?:прокусити|порвати|відкусити)',
-                r'міцний',
-                r'прочный',
-                r'нельзя\s+(?:прокусить|порвать|откусить)',
+            'Объем/Количество': [
+                r'(\d+)\s*(мл|ml|л|l)\b',
+                r'об[ъ\']єм[\s:]+(\d+)\s*(мл|ml|л|l)',
+                r'(\d+)\s*шт',
+                r'(\d+)\s*units?',
             ],
-            'Покрытие': [
-                r'покриття[\s:]+харчова\s+плівка',
-                r'покрытие[\s:]+пищевая\s+пленка',
-                r'food-grade',
+            'Материал': [
+                r'матеріал[\s:]+([А-Яа-яЄєІіЇїЁёA-Za-z\s-]+)',
+                r'материал[\s:]+([А-Яа-яЁёA-Za-z\s-]+)',
+                r'material[\s:]+([A-Za-z\s-]+)',
             ],
-            'Эффект': [
-                r'ребристая\s+поверхня',
-                r'ребристая\s+поверхность',
+            'Свойства материала': [
+                r'не\s+(?:можна|можна|можно)\s+(?:прокусити|порвати|відкусити|пробити|проколоти)',
+                r'(?:міцний|прочный|durable)',
+                r'(?:водо[съ]тійкий|водостойкий|waterproof)',
+                r'(?:еластичний|эластичный|elastic)',
+            ],
+            'Температура': [
+                r'(\d+)[°°]\s*[Cc]',
+                r'температура[\s:]+(\d+)[°°]?',
+                r'temperature[\s:]+(\d+)',
+            ],
+            'Особенности': [
+                r'(\w+ний|\w+ная|\w+ное)\s+ефект',
                 r'массажний\s+ефект',
                 r'массажный\s+эффект',
+                r'(\w+ний|\w+ная|\w+ное)\s+покриття',
+                r'(\w+ний|\w+ная|\w+ное)\s+покрытие',
             ],
         }
         
         for label, pattern_list in patterns.items():
             for pattern in pattern_list:
-                match = re.search(pattern, text_content, re.IGNORECASE)
-                if match:
-                    if label == 'Размер в сложенном виде':
-                        value = f"{match.group(1)}×{match.group(2)} см"
-                    elif label == 'Вес':
-                        value = f"до {match.group(1)} {match.group(2)}"
+                matches = re.finditer(pattern, text_content, re.IGNORECASE)
+                for match in matches:
+                    # Извлекаем значение в зависимости от паттерна
+                    if label == 'Размеры' and match.groups():
+                        value = f"{match.group(1)}×{match.group(2)}"
+                        # Определяем единицы измерения из контекста
+                        if 'мм' in match.group(0) or 'mm' in match.group(0):
+                            value += " мм"
+                        else:
+                            value += " см"
+                    elif label == 'Вес' and match.groups():
+                        value = f"до {match.group(1)} {match.group(2) if len(match.groups()) > 1 else 'кг'}"
+                    elif label == 'Объем/Количество' and match.groups():
+                        value = f"{match.group(1)} {match.group(2)}"
+                    elif label in ['Материал', 'Свойства материала', 'Особенности']:
+                        # Извлекаем первое найденное значение
+                        if match.groups():
+                            value = match.group(1)
+                        else:
+                            value = match.group(0)
+                    elif label == 'Температура' and match.groups():
+                        value = f"{match.group(1)}°C"
                     else:
                         value = match.group(0) if match.groups() else "Да"
                     
-                    description_facts.append({'label': label, 'value': value})
-                    logger.info(f"✅ Извлечен факт из описания: {label} = {value}")
-                    break  # Не добавляем дубликаты
+                    # Проверяем, не добавляли ли мы уже эту характеристику
+                    if not any(fact.get('value', '').lower() == value.lower() for fact in description_facts):
+                        description_facts.append({'label': label, 'value': value})
+                        logger.info(f"✅ Извлечен факт из описания: {label} = {value}")
+                        break  # Не добавляем дубликаты
         
         return description_facts
     
@@ -272,22 +303,10 @@ class RealFactsExtractor:
                 value = value_cell.get_text(strip=True)
                 
                 if label and value and len(label) > 2 and len(value) > 0:
-                    # Преобразовать украинские названия в русские для единообразия
-                    label_mapping = {
-                        'Тип засобу для депіляції': 'Тип средства',
-                        'Застосування засобу': 'Применение',
-                        'Область застосування': 'Область применения', 
-                        'Гіпоалергенно': 'Гипоаллергенно',
-                        'Тип шкіри': 'Тип кожи',
-                        'Тип волосся': 'Тип волос',
-                        'Призначення і результат': 'Назначение и результат',
-                        'Класифікація косметичного засобу': 'Классификация средства'
-                    }
-                    
-                    # Использовать переводы или оставить оригинал
-                    final_label = label_mapping.get(label, label)
-                    specs.append({'label': final_label, 'value': value})
-                    logger.info(f"✅ Извлечена характеристика: {final_label} = {value}")
+                    # УНИВЕРСАЛЬНО: сохраняем оригинальные labels как есть
+                    # Никаких hardcoded маппингов для конкретных категорий товаров
+                    specs.append({'label': label, 'value': value})
+                    logger.info(f"✅ Извлечена характеристика: {label} = {value}")
                 else:
                     logger.debug(f"⚠️ Пропущена строка {i}: label='{label}', value='{value}'")
             else:
