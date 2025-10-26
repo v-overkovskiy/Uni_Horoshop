@@ -410,11 +410,19 @@ class AsyncProductProcessor:
                     selected_specs = ua_specs
                     logger.info(f"✅ Используем UA характеристики: {len(ua_specs)} (переведенные через LLM)")
                 
+                # 🔧 ИСПРАВЛЕНИЕ: Объединяем specs из UnifiedParser с дополнительными фактами из описания
+                if 'specs' in facts:
+                    # Убираем дубликаты по label
+                    existing_labels = {spec.get('label') for spec in selected_specs}
+                    additional_specs = [spec for spec in facts['specs'] if spec.get('label') not in existing_labels]
+                    selected_specs.extend(additional_specs)
+                    logger.info(f"✅ Объединено {len(additional_specs)} дополнительных фактов из описания")
+                
                 # selected_specs уже список словарей, используем напрямую
                 logger.info(f"🔍 DEBUG: selected_specs тип: {type(selected_specs)}")
                 logger.info(f"🔍 DEBUG: selected_specs содержимое: {selected_specs}")
                 facts['specs'] = selected_specs
-                logger.info(f"✅ Извлечено {len(selected_specs)} характеристик через UnifiedParser для {locale}")
+                logger.info(f"✅ Всего {len(selected_specs)} характеристик (таблица + описание) для {locale}")
             
             # Добавляем компоненты набора в факты
             facts['bundle_components'] = bundle_components
