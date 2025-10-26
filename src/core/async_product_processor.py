@@ -424,6 +424,12 @@ class AsyncProductProcessor:
                     selected_specs.extend(additional_specs)
                     logger.info(f"✅ Объединено {len(additional_specs)} дополнительных фактов из описания")
                 
+                # 🔧 КРИТИЧНО: Нормализуем ВСЕ характеристики UA (перевод + грамматика)
+                if locale == 'ua':
+                    for i, spec in enumerate(selected_specs):
+                        selected_specs[i] = self._normalize_spec_for_locale(spec, locale)
+                    logger.info(f"🔧 Нормализованы все {len(selected_specs)} UA характеристик")
+                
                 # selected_specs уже список словарей, используем напрямую
                 logger.info(f"🔍 DEBUG: selected_specs тип: {type(selected_specs)}")
                 logger.info(f"🔍 DEBUG: selected_specs содержимое: {selected_specs}")
@@ -1087,30 +1093,75 @@ class AsyncProductProcessor:
         label = spec.get('label', '')
         value = spec.get('value', '')
         
-        # Словарь перевода labels RU -> UA
+        import re
+        
+        # Словарь перевода labels RU -> UA (универсальный для всех характеристик)
         label_translation = {
             'Вес': 'Вага',
             'Свойства материала': 'Властивості матеріалу',
             'Особенности': 'Особливості',
             'Размер в сложенном виде': 'Розмір в складному вигляді',
             'Обработка поверхности': 'Обробка поверхні',
+            'Стан': 'Стан',
+            'Материал': 'Матеріал',
+            'Пол': 'Пол',
+            'Возраст': 'Вік',
+            'Масс': 'Мас',
+            'Маса': 'Мас',
         }
         
         # Переводим label если нужно
         if label in label_translation:
             spec['label'] = label_translation[label]
+        else:
+            # 🔧 Пытаемся перевести через проверку на русские буквы
+            if locale == 'ua' and any(cyr in label for cyr in 'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ'):
+                # Пытаемся угадать перевод
+                normalized_label = self._guess_ua_translation(label)
+                if normalized_label:
+                    spec['label'] = normalized_label
+                    logger.info(f"🔧 Переведен label с RU на UA: '{label}' → '{spec['label']}'")
         
         # Исправляем грамматические ошибки в значениях для UA
         if locale == 'ua':
             grammar_fixes = {
                 r'\bлегкий вага\b': 'легка вага',
                 r'\bне прокусюється\b': 'не прокушується',
+                r'\bлегка вага\b': 'легка вага',
             }
             
-            import re
+            original_value = value
             for pattern, replacement in grammar_fixes.items():
                 if re.search(pattern, value, re.IGNORECASE):
-                    spec['value'] = re.sub(pattern, replacement, value, flags=re.IGNORECASE)
-                    logger.info(f"🔧 Исправлена грамматика UA: '{value}' → '{spec['value']}'")
+                    value = re.sub(pattern, replacement, value, flags=re.IGNORECASE)
+                    logger.info(f"🔧 Исправлена грамматика UA: '{original_value}' → '{value}'")
+            
+            spec['value'] = value
         
         return spec
+    
+    def _guess_ua_translation(self, ru_label: str) -> str:
+        """Угадывает украинский перевод для русского label"""
+        # Простые замены
+        simple_mappings = {
+            'стан': 'стан',  # Без изменений для простых слов
+            'материал': 'матеріал',
+            'пол': 'пол',
+            'возраст': 'вік',
+        }
+        
+        ru_lower = ru_label.lower()
+        if ru_lower in simple_mappings:
+            return simple_mappings[ru_lower]
+        
+        # Другие возможные переводы
+        ua_patterns = {
+            r'^вес': 'вага',
+            r'^масс': 'вага',
+        }
+        
+        for pattern, ua_word in ua_patterns.items():
+            if re.search(pattern, ru_lower):
+                return ua_word
+        
+        return ru_label  # Если не нашли, возвращаем как есть
