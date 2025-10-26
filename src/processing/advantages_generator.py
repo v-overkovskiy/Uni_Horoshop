@@ -131,7 +131,7 @@ class AdvantagesGenerator:
             
             if len(advantages) >= 3:  # Минимум 3 преимущества
                 logger.info(f"✅ LLM сгенерировал {len(advantages)} преимуществ для {locale}")
-                return advantages[:5]  # Максимум 5
+                return advantages[:6]  # Максимум 6 (соответствует FragmentRenderer)
             else:
                 logger.warning(f"⚠️ LLM вернул недостаточно преимуществ: {len(advantages)}")
                 raise ValueError("Недостаточно преимуществ")
