@@ -51,17 +51,23 @@ class RealFactsExtractor:
             # 2. Извлекаем характеристики
             specs = self._extract_specs(soup)
             
+            # 3. НОВОЕ: Извлекаем дополнительные факты из текстового описания
+            description_facts = self._extract_facts_from_description(soup)
+            if description_facts:
+                specs.extend(description_facts)
+                logger.info(f"✅ Добавлено {len(description_facts)} фактов из текстового описания")
+            
             # КРИТИЧНО: Проверяем что характеристики извлечены
             if not specs or len(specs) < 3:
                 raise ValueError(f"❌ ЗАПРЕЩЕНО: Недостаточно характеристик товара из {url} (получено: {len(specs)})")
             
-            # 3. Извлекаем информацию из URL
+            # 4. Извлекаем информацию из URL
             url_info = self._extract_from_url(url)
             
-            # 4. Определяем тип товара
+            # 5. Определяем тип товара
             product_type = self._determine_product_type(title, url)
             
-            # 5. Извлекаем изображение
+            # 6. Извлекаем изображение
             image_url = self._extract_image(soup)
             
             facts = {
@@ -159,6 +165,59 @@ class RealFactsExtractor:
         # 3. НЕ добавляем выдуманные характеристики - только реальные из HTML
         logger.info(f"✅ Возвращаем только реальные характеристики из HTML: {len(specs)} шт")
         return specs
+    
+    def _extract_facts_from_description(self, soup: BeautifulSoup) -> List[Dict[str, str]]:
+        """Извлекает дополнительные факты из текстового описания товара"""
+        description_facts = []
+        text_content = soup.get_text()
+        
+        # Паттерны для извлечения фактов
+        patterns = {
+            'Вес': [
+                r'вага[\s:]+до\s+(\d+)\s*(кг|г|gram)',
+                r'вес[\s:]+до\s+(\d+)\s*(кг|г|gram)',
+                r'важить[\s:]+(\d+)\s*(кг|г|gram)',
+            ],
+            'Размер в сложенном виде': [
+                r'в\s+складеному\s+виді[\s:]+(\d+)[×x](\d+)\s*см',
+                r'в\s+складеном\s+виде[\s:]+(\d+)[×x](\d+)\s*см',
+                r'размер[\s:]+в\s+сложенном\s+виде[\s:]+(\d+)[×x](\d+)\s*см',
+            ],
+            'Прочность': [
+                r'не\s+можна\s+(?:прокусити|порвати|відкусити)',
+                r'міцний',
+                r'прочный',
+                r'нельзя\s+(?:прокусить|порвать|откусить)',
+            ],
+            'Покрытие': [
+                r'покриття[\s:]+харчова\s+плівка',
+                r'покрытие[\s:]+пищевая\s+пленка',
+                r'food-grade',
+            ],
+            'Эффект': [
+                r'ребристая\s+поверхня',
+                r'ребристая\s+поверхность',
+                r'массажний\s+ефект',
+                r'массажный\s+эффект',
+            ],
+        }
+        
+        for label, pattern_list in patterns.items():
+            for pattern in pattern_list:
+                match = re.search(pattern, text_content, re.IGNORECASE)
+                if match:
+                    if label == 'Размер в сложенном виде':
+                        value = f"{match.group(1)}×{match.group(2)} см"
+                    elif label == 'Вес':
+                        value = f"до {match.group(1)} {match.group(2)}"
+                    else:
+                        value = match.group(0) if match.groups() else "Да"
+                    
+                    description_facts.append({'label': label, 'value': value})
+                    logger.info(f"✅ Извлечен факт из описания: {label} = {value}")
+                    break  # Не добавляем дубликаты
+        
+        return description_facts
     
     def _extract_specs_from_table(self, soup: BeautifulSoup) -> List[Dict[str, str]]:
         """Извлекает характеристики из таблицы на странице товара с жёстким фильтром"""
