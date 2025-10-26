@@ -410,19 +410,9 @@ class AsyncProductProcessor:
                     selected_specs = ua_specs
                     logger.info(f"✅ Используем UA характеристики: {len(ua_specs)} (переведенные через LLM)")
                 
-                # 🔧 ИСПРАВЛЕНИЕ: Объединяем specs из UnifiedParser с дополнительными фактами из описания
-                if 'specs' in facts:
-                    # Убираем дубликаты по label
-                    existing_labels = {spec.get('label') for spec in selected_specs}
-                    additional_specs = [spec for spec in facts['specs'] if spec.get('label') not in existing_labels]
-                    
-                    # 🔧 КРИТИЧНО: Переводим labels и исправляем грамматику для UA
-                    if locale == 'ua':
-                        for i, spec in enumerate(additional_specs):
-                            additional_specs[i] = self._normalize_spec_for_locale(spec, locale)
-                    
-                    selected_specs.extend(additional_specs)
-                    logger.info(f"✅ Объединено {len(additional_specs)} дополнительных фактов из описания")
+                # 🔧 УДАЛЕНО: НЕ добавляем факты из описания в блок характеристик
+                # Факты из описания должны использоваться только в тексте описания и преимуществах
+                # Не в блоке "Характеристики"
                 
                 # 🔧 КРИТИЧНО: Нормализуем ВСЕ характеристики UA (перевод + грамматика)
                 if locale == 'ua':
@@ -434,7 +424,7 @@ class AsyncProductProcessor:
                 logger.info(f"🔍 DEBUG: selected_specs тип: {type(selected_specs)}")
                 logger.info(f"🔍 DEBUG: selected_specs содержимое: {selected_specs}")
                 facts['specs'] = selected_specs
-                logger.info(f"✅ Всего {len(selected_specs)} характеристик (таблица + описание) для {locale}")
+                logger.info(f"✅ Всего {len(selected_specs)} характеристик (только из таблицы) для {locale}")
             
             # Добавляем компоненты набора в факты
             facts['bundle_components'] = bundle_components
