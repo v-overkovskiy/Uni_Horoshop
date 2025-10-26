@@ -415,6 +415,12 @@ class AsyncProductProcessor:
                     # Убираем дубликаты по label
                     existing_labels = {spec.get('label') for spec in selected_specs}
                     additional_specs = [spec for spec in facts['specs'] if spec.get('label') not in existing_labels]
+                    
+                    # 🔧 КРИТИЧНО: Переводим labels и исправляем грамматику для UA
+                    if locale == 'ua':
+                        for i, spec in enumerate(additional_specs):
+                            additional_specs[i] = self._normalize_spec_for_locale(spec, locale)
+                    
                     selected_specs.extend(additional_specs)
                     logger.info(f"✅ Объединено {len(additional_specs)} дополнительных фактов из описания")
                 
@@ -1075,3 +1081,36 @@ class AsyncProductProcessor:
                 'success': False,
                 'error': f'Resilient processing failed: {e}'
             }
+    
+    def _normalize_spec_for_locale(self, spec: Dict[str, str], locale: str) -> Dict[str, str]:
+        """Нормализует характеристику для конкретной локали (перевод + грамматика)"""
+        label = spec.get('label', '')
+        value = spec.get('value', '')
+        
+        # Словарь перевода labels RU -> UA
+        label_translation = {
+            'Вес': 'Вага',
+            'Свойства материала': 'Властивості матеріалу',
+            'Особенности': 'Особливості',
+            'Размер в сложенном виде': 'Розмір в складному вигляді',
+            'Обработка поверхности': 'Обробка поверхні',
+        }
+        
+        # Переводим label если нужно
+        if label in label_translation:
+            spec['label'] = label_translation[label]
+        
+        # Исправляем грамматические ошибки в значениях для UA
+        if locale == 'ua':
+            grammar_fixes = {
+                r'\bлегкий вага\b': 'легка вага',
+                r'\bне прокусюється\b': 'не прокушується',
+            }
+            
+            import re
+            for pattern, replacement in grammar_fixes.items():
+                if re.search(pattern, value, re.IGNORECASE):
+                    spec['value'] = re.sub(pattern, replacement, value, flags=re.IGNORECASE)
+                    logger.info(f"🔧 Исправлена грамматика UA: '{value}' → '{spec['value']}'")
+        
+        return spec
