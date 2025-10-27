@@ -102,13 +102,18 @@ class ProductFragmentRenderer:
                     with tag('div', klass='cards'):
                         for advantage in advantages[:6]:  # Ограничиваем до 6
                             if isinstance(advantage, str):
+                                # Убираем точку в конце
+                                clean_advantage = advantage.rstrip('.,')
                                 with tag('div', klass='card'):
                                     with tag('h4'):
-                                        text(advantage)
+                                        text(clean_advantage)
                             elif isinstance(advantage, dict):
+                                # Убираем точку в конце
+                                adv_text = advantage.get('title', advantage.get('name', ''))
+                                clean_advantage = adv_text.rstrip('.,')
                                 with tag('div', klass='card'):
                                     with tag('h4'):
-                                        text(advantage.get('title', advantage.get('name', '')))
+                                        text(clean_advantage)
                 
                 # 7. FAQ (строго 6 вопросов)
                 faq_data = blocks.get('faq', [])
