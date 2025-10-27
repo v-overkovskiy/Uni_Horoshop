@@ -54,6 +54,8 @@ class RealFactsExtractor:
             if description_facts:
                 specs.extend(description_facts)
                 logger.info(f"✅ Добавлено {len(description_facts)} фактов из текстового описания")
+            else:
+                description_facts = []
             
             # КРИТИЧНО: Проверяем что характеристики извлечены
             if not specs or len(specs) < 3:
@@ -73,6 +75,7 @@ class RealFactsExtractor:
                 'brand': 'Epilax',
                 'product_type': product_type,
                 'specs': specs,
+                'description_facts': description_facts,  # Отдельно для промпта
                 'image_url': image_url,
                 'url': url,
                 **url_info

@@ -38,6 +38,7 @@ class UnifiedContentGenerator:
 Тип товара: {product_type}
 Назначение: {purpose}
 Характеристики: {characteristics}
+Дополнительные факты из текстового описания: {description_facts}
 Локаль: {locale}
 
 КРИТИЧЕСКИ ВАЖНО - НАРУШЕНИЕ ВЛЕЧЕТ ОШИБКУ:
@@ -185,12 +186,19 @@ class UnifiedContentGenerator:
         try:
             # Подготавливаем данные для промпта
             language_instructions = self._get_language_instructions(locale)
+            # Форматируем факты из текстового описания
+            description_facts = product_facts.get('description_facts', [])
+            description_facts_text = ""
+            if description_facts:
+                description_facts_text = "\n".join([f"- {fact.get('label', '')}: {fact.get('value', '')}" for fact in description_facts])
+            
             prompt_data = {
                 'product_title': title,
                 'volume': product_facts.get('volume', ''),
                 'product_type': product_facts.get('product_type', ''),
                 'purpose': await self._extract_purpose(product_facts),
                 'characteristics': self._format_characteristics(characteristics),
+                'description_facts': description_facts_text,  # Добавляем факты из описания
                 'locale': locale,
                 'language_instruction': language_instructions['instruction'],
                 'forbidden_letters': language_instructions['forbidden_letters'],
