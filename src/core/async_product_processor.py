@@ -17,15 +17,45 @@ UA_TO_RU_MAP = str.maketrans({
     'ґ': 'г', 'Ґ': 'Г',
 })
 
+# Универсальный словарь перевода labels характеристик
+SPEC_LABEL_TRANSLATIONS = {
+    'ru': {
+        'країна виробник': 'Страна производитель',
+        'країна виробника': 'Страна производителя',
+        'країна': 'Страна',
+        'циферблат': 'Циферблат',
+        'особливості': 'Особенности',
+        'особливости': 'Особенности',
+    },
+    'ua': {
+        'страна производитель': 'Країна виробник',
+        'страна производителя': 'Країна виробника',
+        'страна': 'Країна',
+        'циферблат': 'Циферблат',
+        'особенности': 'Особливості',
+    }
+}
+
 def normalize_ru_specs_round3(specs: List[Dict]) -> List[Dict]:
-    """Нормализация характеристик для Round 3 - заменяем украинские буквы на русские"""
+    """Нормализация характеристик для Round 3 - заменяем украинские буквы на русские и переводим labels"""
     if not specs:
         return specs
     
     normalized = []
     for spec in specs:
-        label = str(spec.get('label', '')).translate(UA_TO_RU_MAP)
-        value = str(spec.get('value', '')).translate(UA_TO_RU_MAP)
+        label = str(spec.get('label', ''))
+        value = str(spec.get('value', ''))
+        
+        # Шаг 1: Заменяем украинские буквы на русские
+        label = label.translate(UA_TO_RU_MAP)
+        value = value.translate(UA_TO_RU_MAP)
+        
+        # Шаг 2: Переводим label если он на украинском
+        label_lower = label.lower()
+        if label_lower in SPEC_LABEL_TRANSLATIONS['ru']:
+            label = SPEC_LABEL_TRANSLATIONS['ru'][label_lower]
+            logger.info(f"✅ Перевод label: '{spec.get('label', '')}' → '{label}'")
+        
         normalized.append({'label': label, 'value': value})
     
     return normalized
