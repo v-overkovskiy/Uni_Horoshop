@@ -230,6 +230,39 @@ class RealFactsExtractor:
                 r'не\s*пропускає\s*холод',
                 r'не\s*пропускает\s*холод',
             ],
+            'Батарея/Питание': [
+                r'батарея[\s:]+([A-Z0-9]+)',
+                r'батарейка[\s:]+([A-Z0-9]+)',
+                r'battery[\s:]+([A-Z0-9]+)',
+                r'питание[\s:]+([A-Z0-9]+)',
+                r'power[\s:]+([A-Z0-9]+)',
+                r'LR\d+',
+                r'AAA',
+                r'AA',
+                r'CR\d+',
+            ],
+            'Календарь': [
+                r'календар[ьи]',
+                r'calendar',
+                r'дата',
+                r'date',
+            ],
+            'Часы': [
+                r'(?:12|24)\s*(?:годинний|часовой|hour)\s*(?:формат|format)',
+                r'часы[\s:]+(?:12|24)',
+                r'clock[\s:]+(?:12|24)',
+            ],
+            'Сигнализация': [
+                r'сигнализация',
+                r'alarm',
+                r'будильник',
+                r'звуковой\s*сигнал',
+            ],
+            'Память': [
+                r'память[\s:]+lap',
+                r'memory[\s:]+lap',
+                r'lap[\s:]+memory',
+            ],
         }
         
         for label, pattern_list in patterns.items():
@@ -248,13 +281,13 @@ class RealFactsExtractor:
                         value = f"до {match.group(1)} {match.group(2) if len(match.groups()) > 1 else 'кг'}"
                     elif label == 'Объем/Количество' and match.groups():
                         value = f"{match.group(1)} {match.group(2)}"
-                    elif label in ['Покрытие', 'Эффекты', 'Легкость очистки', 'Термоизоляция']:
+                    elif label in ['Покрытие', 'Эффекты', 'Легкость очистки', 'Термоизоляция', 'Календарь', 'Сигнализация']:
                         # Извлекаем найденный текст
                         value = match.group(0)
-                    elif label in ['Материал', 'Свойства материала', 'Особенности']:
+                    elif label in ['Материал', 'Свойства материала', 'Особенности', 'Батарея/Питание', 'Часы', 'Память']:
                         # Извлекаем первое найденное значение
                         if match.groups():
-                            value = match.group(1)
+                            value = match.group(1) if label == 'Батарея/Питание' or label == 'Память' else match.group(0)
                         else:
                             value = match.group(0)
                     elif label == 'Температура' and match.groups():
