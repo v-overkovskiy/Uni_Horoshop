@@ -248,6 +248,9 @@ class RealFactsExtractor:
                         value = f"до {match.group(1)} {match.group(2) if len(match.groups()) > 1 else 'кг'}"
                     elif label == 'Объем/Количество' and match.groups():
                         value = f"{match.group(1)} {match.group(2)}"
+                    elif label in ['Покрытие', 'Эффекты', 'Легкость очистки', 'Термоизоляция']:
+                        # Извлекаем найденный текст
+                        value = match.group(0)
                     elif label in ['Материал', 'Свойства материала', 'Особенности']:
                         # Извлекаем первое найденное значение
                         if match.groups():
@@ -264,6 +267,14 @@ class RealFactsExtractor:
                         description_facts.append({'label': label, 'value': value})
                         logger.info(f"✅ Извлечен факт из описания: {label} = {value}")
                         break  # Не добавляем дубликаты
+        
+        # Логируем все извлеченные факты
+        if description_facts:
+            logger.info(f"📝 ВСЕГО извлечено фактов из описания: {len(description_facts)}")
+            for fact in description_facts:
+                logger.info(f"   - {fact.get('label', '')}: {fact.get('value', '')}")
+        else:
+            logger.warning(f"⚠️ Факты из описания НЕ извлечены!")
         
         return description_facts
     
