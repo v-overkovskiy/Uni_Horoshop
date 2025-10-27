@@ -172,6 +172,20 @@ class RealFactsExtractor:
         description_facts = []
         text_content = soup.get_text()
         
+        # УНИВЕРСАЛЬНО: Извлекаем факты из нумерованных и маркированных списков
+        # Ищем списки <li> и проверяем их содержимое
+        list_items = soup.find_all('li')
+        for item in list_items:
+            text = item.get_text(strip=True)
+            # Ищем нумерованные элементы: "1.", "2.", "1.2", "3.", и т.д.
+            if re.match(r'^\d+(?:\.\d+)?\.?\s+', text):
+                # Извлекаем текст после номера
+                item_text = re.sub(r'^\d+(?:\.\d+)?\.?\s+', '', text)
+                # Добавляем как факт, если содержит конкретную информацию
+                if len(item_text) > 10 and len(item_text) < 200:  # Фильтруем слишком короткие и длинные
+                    description_facts.append({'label': 'Характеристика', 'value': item_text})
+                    logger.info(f"✅ Извлечен факт из списка: {item_text[:50]}...")
+        
         # УНИВЕРСАЛЬНЫЕ паттерны для извлечения фактов (работают для ЛЮБЫХ товаров)
         patterns = {
             'Вес': [
