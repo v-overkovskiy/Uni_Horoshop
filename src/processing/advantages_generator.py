@@ -127,6 +127,8 @@ class AdvantagesGenerator:
                     advantage = line.split('. ', 1)[1]
                 else:
                     advantage = line
+                # Убираем точку в конце
+                advantage = advantage.rstrip('.,')
                 advantages.append(advantage)
             
             if len(advantages) >= 3:  # Минимум 3 преимущества
