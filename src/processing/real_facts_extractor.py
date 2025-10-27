@@ -49,13 +49,12 @@ class RealFactsExtractor:
             # 2. Извлекаем характеристики
             specs = self._extract_specs(soup)
             
-            # 3. НОВОЕ: Извлекаем дополнительные факты из текстового описания
-            description_facts = self._extract_facts_from_description(soup)
-            if description_facts:
-                specs.extend(description_facts)
-                logger.info(f"✅ Добавлено {len(description_facts)} фактов из текстового описания")
+            # 3. НОВОЕ: Извлекаем полное описание товара как есть
+            description_text = self._extract_full_description(soup)
+            if description_text:
+                logger.info(f"✅ Извлечено полное описание товара ({len(description_text)} символов)")
             else:
-                description_facts = []
+                description_text = ""
             
             # КРИТИЧНО: Проверяем что характеристики извлечены
             if not specs or len(specs) < 3:
@@ -75,7 +74,7 @@ class RealFactsExtractor:
                 'brand': 'Epilax',
                 'product_type': product_type,
                 'specs': specs,
-                'description_facts': description_facts,  # Отдельно для промпта
+                'full_description': description_text,  # Полное описание как есть
                 'image_url': image_url,
                 'url': url,
                 **url_info
@@ -167,7 +166,56 @@ class RealFactsExtractor:
         logger.info(f"✅ Возвращаем только реальные характеристики из HTML: {len(specs)} шт")
         return specs
     
-    def _extract_facts_from_description(self, soup: BeautifulSoup) -> List[Dict[str, str]]:
+    def _extract_full_description(self, soup: BeautifulSoup) -> str:
+        """Извлекает полное текстовое описание товара как есть - УНИВЕРСАЛЬНО для любых товаров"""
+        description_parts = []
+        
+        # Ищем описание в стандартных местах
+        description_selectors = [
+            '.product-description',
+            '.description',
+            '#description',
+            '.prod-desc',
+            'div.description',
+            '[class*="description"]'
+        ]
+        
+        for selector in description_selectors:
+            desc_elem = soup.select_one(selector)
+            if desc_elem:
+                text = desc_elem.get_text(strip=True)
+                if text and len(text) > 50:  # Минимум 50 символов
+                    description_parts.append(text)
+                    logger.info(f"✅ Найдено описание с селектором {selector}: {len(text)} символов")
+                    break
+        
+        # Если не нашли через селекторы, пробуем найти в основных блоках контента
+        if not description_parts:
+            content_blocks = soup.find_all(['p', 'div', 'article'], class_=lambda x: x and 'desc' in x.lower())
+            for block in content_blocks:
+                text = block.get_text(strip=True)
+                if text and len(text) > 50:
+                    description_parts.append(text)
+                    break
+        
+        # Если совсем ничего не нашли, берем текст из body (осторожно)
+        if not description_parts:
+            body = soup.find('body')
+            if body:
+                text = body.get_text(strip=True)
+                # Ограничиваем длину чтобы не брать весь сайт
+                if text and len(text) > 100:
+                    description_parts.append(text[:2000])  # Максимум 2000 символов
+        
+        result = ' '.join(description_parts)
+        if result:
+            logger.info(f"✅ Извлечено полное описание: {len(result)} символов")
+        else:
+            logger.warning(f"⚠️ Описание не найдено")
+        
+        return result
+    
+    def _extract_facts_from_description_OLD(self, soup: BeautifulSoup) -> List[Dict[str, str]]:
         """Извлекает дополнительные факты из текстового описания товара - УНИВЕРСАЛЬНО для любых товаров"""
         description_facts = []
         text_content = soup.get_text()
